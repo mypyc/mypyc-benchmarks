@@ -1,8 +1,8 @@
-from benchmarking import benchmark, BenchmarkContext
+from benchmarking import benchmark, benchmark_with_context, BenchmarkContext
 
 
 @benchmark
-def int_binary_ops(bm: BenchmarkContext) -> None:
+def int_binary_ops() -> None:
     a = []
     for i in range(1000):
         a.append(i * i * 12753 % (2**20 - 1))
@@ -23,7 +23,7 @@ def int_binary_ops(bm: BenchmarkContext) -> None:
     assert n == 4867360, n
 
 
-@benchmark
+@benchmark_with_context
 def int_long_binary_ops(bm: BenchmarkContext) -> None:
     a = []
     for i in range(1000):

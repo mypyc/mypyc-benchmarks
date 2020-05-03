@@ -25,7 +25,22 @@ benchmarks = []  # type: List[BenchmarkInfo]
 T = TypeVar("T")
 
 
-def benchmark(func: Callable[[BenchmarkContext], T]) -> Callable[[BenchmarkContext], T]:
+def benchmark(func: Callable[[], T]) -> Callable[[], T]:
+    name = func.__name__
+    if name.startswith('__mypyc_'):
+        name = name.replace('__mypyc_', '')
+        name = name.replace('_decorator_helper__', '')
+
+    def wrapper(ctx: BenchmarkContext) -> T:
+        return func()
+
+    benchmark = BenchmarkInfo(name, func.__module__, wrapper)
+    benchmarks.append(benchmark)
+    return func
+
+
+def benchmark_with_context(
+        func: Callable[[BenchmarkContext], T]) -> Callable[[BenchmarkContext], T]:
     name = func.__name__
     if name.startswith('__mypyc_'):
         name = name.replace('__mypyc_', '')
