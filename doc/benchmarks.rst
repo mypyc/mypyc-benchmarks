@@ -63,3 +63,18 @@ Simple, brute-force N-Queens solver.
 See `Eight queens puzzle <https://en.wikipedia.org/wiki/Eight_queens_puzzle>`_.
 
 Adapted to mypyc from https://github.com/python/pyperformance.
+
+
+spectral_norm
+-------------
+
+MathWorld: "Hundred-Dollar, Hundred-Digit Challenge Problems", Challenge #3.
+http://mathworld.wolfram.com/Hundred-DollarHundred-DigitChallengeProblems.html
+
+The Computer Language Benchmarks Game
+http://benchmarksgame.alioth.debian.org/u64q/spectralnorm-description.html#spectralnorm
+
+Contributed by Sebastien Loisel. Fixed by Isaac Gouy. Sped up by Josh Goldfoot.
+Dirtily sped up by Simon Descarpentries. Concurrency by Jason Stitt.
+
+Adapted to mypyc from https://github.com/python/pyperformance.
