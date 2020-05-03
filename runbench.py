@@ -22,7 +22,7 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
                       binary: str,
                       compiled: bool) -> float:
     module = benchmark.module
-    program = 'import %s; import benchmarking as bm; print(bm.run_once("%s"))' % (
+    program = 'import %s; import benchmarking as bm; print("\\nelapsed:", bm.run_once("%s"))' % (
         module,
         benchmark.name,
     )
@@ -35,7 +35,13 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
         if not compiled:
             os.rename(binary + '.tmp', binary)
 
-    return float(result.stdout)
+    return parse_elapsed_time(result.stdout)
+
+
+def parse_elapsed_time(output: bytes) -> float:
+    m = re.search(rb"\belapsed: ([-+0-9.e]+)\b", output)
+    assert m is not None, 'could not find elapsed time in output:\n%r' % output
+    return float(m.group(1))
 
 
 def run_benchmark(benchmark: BenchmarkInfo, binary: str) -> None:
