@@ -1,3 +1,5 @@
+# mypy: disallow-untyped-defs
+
 """
 Solver of Hexiom board game.
 
@@ -9,10 +11,13 @@ Source: https://github.com/slowfrog/hexiom : hexiom2.py, level36.txt
 """
 
 from __future__ import division, print_function
+from typing import Dict, Any, Optional, List, Tuple, cast, IO
 
-import pyperf
+from typing_extensions import Final
 from six.moves import xrange, StringIO
 from six import u as u_lit, text_type
+
+from benchmarking import benchmark
 
 # 2016-07-07: CPython 3.6 takes ~25 ms to solve the board level 25
 DEFAULT_LEVEL = 25
@@ -21,62 +26,67 @@ DEFAULT_LEVEL = 25
 ##################################
 class Dir(object):
 
-    def __init__(self, x, y):
+    def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
 
 
-DIRS = [Dir(1, 0),
-        Dir(-1, 0),
-        Dir(0, 1),
-        Dir(0, -1),
-        Dir(1, 1),
-        Dir(-1, -1)]
+DIRS: Final = [Dir(1, 0),
+               Dir(-1, 0),
+               Dir(0, 1),
+               Dir(0, -1),
+               Dir(1, 1),
+               Dir(-1, -1)]
 
-EMPTY = 7
+EMPTY: Final = 7
 
 ##################################
 
 
 class Done(object):
-    MIN_CHOICE_STRATEGY = 0
-    MAX_CHOICE_STRATEGY = 1
-    HIGHEST_VALUE_STRATEGY = 2
-    FIRST_STRATEGY = 3
-    MAX_NEIGHBORS_STRATEGY = 4
-    MIN_NEIGHBORS_STRATEGY = 5
+    MIN_CHOICE_STRATEGY: Final = 0
+    MAX_CHOICE_STRATEGY: Final = 1
+    HIGHEST_VALUE_STRATEGY: Final = 2
+    FIRST_STRATEGY: Final = 3
+    MAX_NEIGHBORS_STRATEGY: Final = 4
+    MIN_NEIGHBORS_STRATEGY: Final = 5
 
-    def __init__(self, count, empty=False):
+    def __init__(self, count: int, empty: bool = False) -> None:
         self.count = count
         self.cells = None if empty else [
             [0, 1, 2, 3, 4, 5, 6, EMPTY] for i in xrange(count)]
 
-    def clone(self):
+    def clone(self) -> 'Done':
         ret = Done(self.count, True)
+        assert self.cells is not None
         ret.cells = [self.cells[i][:] for i in xrange(self.count)]
         return ret
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int) -> List[int]:
+        assert self.cells is not None
         return self.cells[i]
 
-    def set_done(self, i, v):
+    def set_done(self, i: int, v: int) -> None:
+        assert self.cells is not None
         self.cells[i] = [v]
 
-    def already_done(self, i):
+    def already_done(self, i: int) -> bool:
+        assert self.cells is not None
         return len(self.cells[i]) == 1
 
-    def remove(self, i, v):
+    def remove(self, i: int, v: int) -> bool:
+        assert self.cells is not None
         if v in self.cells[i]:
             self.cells[i].remove(v)
             return True
         else:
             return False
 
-    def remove_all(self, v):
+    def remove_all(self, v: int) -> None:
         for i in xrange(self.count):
             self.remove(i, v)
 
-    def remove_unfixed(self, v):
+    def remove_unfixed(self, v: int) -> bool:
         changed = False
         for i in xrange(self.count):
             if not self.already_done(i):
@@ -84,32 +94,35 @@ class Done(object):
                     changed = True
         return changed
 
-    def filter_tiles(self, tiles):
+    def filter_tiles(self, tiles: List[int]) -> None:
         for v in xrange(8):
             if tiles[v] == 0:
                 self.remove_all(v)
 
-    def next_cell_min_choice(self):
+    def next_cell_min_choice(self) -> int:
         minlen = 10
         mini = -1
+        assert self.cells is not None
         for i in xrange(self.count):
             if 1 < len(self.cells[i]) < minlen:
                 minlen = len(self.cells[i])
                 mini = i
         return mini
 
-    def next_cell_max_choice(self):
+    def next_cell_max_choice(self) -> int:
         maxlen = 1
         maxi = -1
+        assert self.cells is not None
         for i in xrange(self.count):
             if maxlen < len(self.cells[i]):
                 maxlen = len(self.cells[i])
                 maxi = i
         return maxi
 
-    def next_cell_highest_value(self):
+    def next_cell_highest_value(self) -> int:
         maxval = -1
         maxi = -1
+        assert self.cells is not None
         for i in xrange(self.count):
             if (not self.already_done(i)):
                 maxvali = max(k for k in self.cells[i] if k != EMPTY)
@@ -118,13 +131,13 @@ class Done(object):
                     maxi = i
         return maxi
 
-    def next_cell_first(self):
+    def next_cell_first(self) -> int:
         for i in xrange(self.count):
             if (not self.already_done(i)):
                 return i
         return -1
 
-    def next_cell_max_neighbors(self, pos):
+    def next_cell_max_neighbors(self, pos: 'Pos') -> int:
         maxn = -1
         maxi = -1
         for i in xrange(self.count):
@@ -137,7 +150,7 @@ class Done(object):
                     maxi = i
         return maxi
 
-    def next_cell_min_neighbors(self, pos):
+    def next_cell_min_neighbors(self, pos: 'Pos') -> int:
         minn = 7
         mini = -1
         for i in xrange(self.count):
@@ -150,7 +163,7 @@ class Done(object):
                     mini = i
         return mini
 
-    def next_cell(self, pos, strategy=HIGHEST_VALUE_STRATEGY):
+    def next_cell(self, pos: 'Pos', strategy: int = HIGHEST_VALUE_STRATEGY) -> int:
         if strategy == Done.HIGHEST_VALUE_STRATEGY:
             return self.next_cell_highest_value()
         elif strategy == Done.MIN_CHOICE_STRATEGY:
@@ -171,7 +184,7 @@ class Done(object):
 
 class Node(object):
 
-    def __init__(self, pos, id, links):
+    def __init__(self, pos: Tuple[int, int], id: int, links: List[int]) -> None:
         self.pos = pos
         self.id = id
         self.links = links
@@ -181,10 +194,10 @@ class Node(object):
 
 class Hex(object):
 
-    def __init__(self, size):
+    def __init__(self, size: int) -> None:
         self.size = size
         self.count = 3 * size * (size - 1) + 1
-        self.nodes_by_id = self.count * [None]
+        self.nodes_by_id: List[Optional[Node]] = [None] * self.count
         self.nodes_by_pos = {}
         id = 0
         for y in xrange(size):
@@ -203,8 +216,9 @@ class Hex(object):
                 self.nodes_by_id[node.id] = node
                 id += 1
 
-    def link_nodes(self):
+    def link_nodes(self) -> None:
         for node in self.nodes_by_id:
+            assert node is not None
             (x, y) = node.pos
             for dir in DIRS:
                 nx = x + dir.x
@@ -212,31 +226,32 @@ class Hex(object):
                 if self.contains_pos((nx, ny)):
                     node.links.append(self.nodes_by_pos[(nx, ny)].id)
 
-    def contains_pos(self, pos):
+    def contains_pos(self, pos: Tuple[int, int]) -> bool:
         return pos in self.nodes_by_pos
 
-    def get_by_pos(self, pos):
+    def get_by_pos(self, pos: Tuple[int, int]) -> Node:
         return self.nodes_by_pos[pos]
 
-    def get_by_id(self, id):
-        return self.nodes_by_id[id]
+    def get_by_id(self, id: int) -> Node:
+        node = self.nodes_by_id[id]
+        return cast(Node, node)
 
 
 ##################################
 class Pos(object):
 
-    def __init__(self, hex, tiles, done=None):
+    def __init__(self, hex: Hex, tiles: List[int], done: Optional[Done] = None) -> None:
         self.hex = hex
         self.tiles = tiles
         self.done = Done(hex.count) if done is None else done
 
-    def clone(self):
+    def clone(self) -> 'Pos':
         return Pos(self.hex, self.tiles, self.done.clone())
 
 ##################################
 
 
-def constraint_pass(pos, last_move=None):
+def constraint_pass(pos: Pos, last_move: Optional[int] = None) -> bool:
     changed = False
     left = pos.tiles[:]
     done = pos.done
@@ -263,6 +278,7 @@ def constraint_pass(pos, last_move=None):
                         changed = True
 
     # Computes how many of each value is still free
+    assert done.cells is not None
     for cell in done.cells:
         if len(cell) == 1:
             left[cell[0]] -= 1
@@ -317,11 +333,11 @@ def constraint_pass(pos, last_move=None):
     return changed
 
 
-ASCENDING = 1
-DESCENDING = -1
+ASCENDING: Final = 1
+DESCENDING: Final = -1
 
 
-def find_moves(pos, strategy, order):
+def find_moves(pos: Pos, strategy: int, order: int) -> List[Tuple[int, int]]:
     done = pos.done
     cell_id = done.next_cell(pos, strategy)
     if cell_id < 0:
@@ -338,12 +354,12 @@ def find_moves(pos, strategy, order):
         return moves
 
 
-def play_move(pos, move):
+def play_move(pos: Pos, move: Tuple[int, int]) -> None:
     (cell_id, i) = move
     pos.done.set_done(cell_id, i)
 
 
-def print_pos(pos, output):
+def print_pos(pos: Pos, output: IO[str]) -> None:
     hex = pos.hex
     done = pos.done
     size = hex.size
@@ -374,12 +390,12 @@ def print_pos(pos, output):
         print(end=u_lit("\n"), file=output)
 
 
-OPEN = 0
-SOLVED = 1
-IMPOSSIBLE = -1
+OPEN: Final = 0
+SOLVED: Final = 1
+IMPOSSIBLE: Final = -1
 
 
-def solved(pos, output, verbose=False):
+def solved(pos: Pos, output: StringIO, verbose: bool = False) -> int:
     hex = pos.hex
     tiles = pos.tiles[:]
     done = pos.done
@@ -419,7 +435,7 @@ def solved(pos, output, verbose=False):
     return SOLVED
 
 
-def solve_step(prev, strategy, order, output, first=False):
+def solve_step(prev: Pos, strategy: int, order: int, output: StringIO, first: bool = False) -> int:
     if first:
         pos = prev.clone()
         while constraint_pass(pos):
@@ -436,7 +452,7 @@ def solve_step(prev, strategy, order, output, first=False):
             ret = OPEN
             new_pos = pos.clone()
             play_move(new_pos, move)
-            # print_pos(new_pos)
+            # print_pos(new_pos, sys.stdout)
             while constraint_pass(new_pos, move[0]):
                 pass
             cur_status = solved(new_pos, output)
@@ -449,7 +465,7 @@ def solve_step(prev, strategy, order, output, first=False):
     return IMPOSSIBLE
 
 
-def check_valid(pos):
+def check_valid(pos: Pos) -> None:
     hex = pos.hex
     tiles = pos.tiles
     # fill missing entries in tiles
@@ -465,14 +481,14 @@ def check_valid(pos):
             "Invalid input. Expected %d tiles, got %d." % (hex.count, tot))
 
 
-def solve(pos, strategy, order, output):
+def solve(pos: Pos, strategy: int, order: int, output: StringIO) -> object:
     check_valid(pos)
     return solve_step(pos, strategy, order, output, first=True)
 
 
 # TODO Write an 'iterator' to go over all x,y positions
 
-def read_file(file):
+def read_file(file: str) -> Pos:
     lines = [line.strip("\r\n") for line in file.splitlines()]
     size = int(lines[0])
     hex = Hex(size)
@@ -520,12 +536,12 @@ def read_file(file):
     return Pos(hex, tiles, done)
 
 
-def solve_file(file, strategy, order, output):
+def solve_file(file: str, strategy: int, order: int, output: StringIO) -> None:
     pos = read_file(file)
     solve(pos, strategy, order, output)
 
 
-LEVELS = {}
+LEVELS: Final = {}
 
 LEVELS[2] = ("""
 2
@@ -622,17 +638,17 @@ LEVELS[36] = ("""
 """)
 
 
-def main(loops, level):
+def main(loops: int, level: int) -> None:
     board, solution = LEVELS[level]
     order = DESCENDING
     strategy = Done.FIRST_STRATEGY
+    stream: Optional[StringIO]
     stream = StringIO()
 
     board = board.strip()
     expected = solution.rstrip()
 
     range_it = xrange(loops)
-    t0 = pyperf.perf_counter()
 
     for _ in range_it:
         stream = StringIO()
@@ -640,35 +656,12 @@ def main(loops, level):
         output = stream.getvalue()
         stream = None
 
-    dt = pyperf.perf_counter() - t0
-
     output = '\n'.join(line.rstrip() for line in output.splitlines())
     if output != expected:
-        raise AssertionError("got a wrong answer:\n%s\nexpected: %s"
+        raise AssertionError("got a wrong answer:\n%s\nexpected:\n%s"
                              % (output, expected))
 
-    return dt
 
-
-def add_cmdline_args(cmd, args):
-    cmd.extend(("--level", str(args.level)))
-
-
-if __name__ == "__main__":
-    kw = {'add_cmdline_args': add_cmdline_args}
-    if pyperf.python_has_jit():
-        # PyPy needs to compute more warmup values to warmup its JIT
-        kw['warmups'] = 15
-    runner = pyperf.Runner(**kw)
-    levels = sorted(LEVELS)
-    runner.argparser.add_argument("--level", type=int,
-                                  choices=levels,
-                                  default=DEFAULT_LEVEL,
-                                  help="Hexiom board level (default: %s)"
-                                       % DEFAULT_LEVEL)
-
-    args = runner.parse_args()
-    runner.metadata['description'] = "Solver of Hexiom board game"
-    runner.metadata['hexiom_level'] = args.level
-
-    runner.bench_time_func('hexiom', main, args.level)
+@benchmark
+def hexiom() -> None:
+    main(10, DEFAULT_LEVEL)  # Second argument: an item of LEVELS
