@@ -110,6 +110,10 @@ def parse_args() -> Tuple[str, bool]:
 
 
 def main() -> None:
+    # Delete compiled modules before importing, as they may be stale.
+    delete_binaries()
+
+    # Import before parsing args so that syntax errors get reported.
     import_all()
 
     name, is_list = parse_args()
@@ -117,8 +121,6 @@ def main() -> None:
         for benchmark in sorted(benchmarks):
             print(benchmark.name)
         sys.exit(0)
-
-    delete_binaries()
 
     for benchmark in benchmarks:
         if benchmark.name == name:
