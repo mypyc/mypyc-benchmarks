@@ -1,4 +1,9 @@
-This project is licensed under the MIT license (reproduced below).
+Original content in this project is licensed under the MIT license
+(reproduced below).
+
+Benchmarks are from various sources. See doc/benchmarks.rst and
+comments in source files. Victor Stinner's pyperformance is licensed
+under the MIT license (without a copyright notice).
 
 = = = = =
 
