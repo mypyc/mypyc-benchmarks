@@ -45,3 +45,11 @@ It's been updated in places to be more idiomatic to Python (for loops over
 collections, a couple magic methods, ``OrderedCollection`` being a list &
 things altering those collections changed to the builtin methods) but largely
 retains the layout & logic from the original. (Ugh.)
+
+
+hexiom
+------
+
+Solver of Hexiom board game (level 25 hard coded).
+
+Adapted to mypyc from https://github.com/python/pyperformance.
