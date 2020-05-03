@@ -78,3 +78,12 @@ Contributed by Sebastien Loisel. Fixed by Isaac Gouy. Sped up by Josh Goldfoot.
 Dirtily sped up by Simon Descarpentries. Concurrency by Jason Stitt.
 
 Adapted to mypyc from https://github.com/python/pyperformance.
+
+
+binary_trees
+------------
+
+Adapted from the Computer Language Benchmarks Game:
+https://benchmarksgame-team.pages.debian.net/benchmarksgame/performance/binarytrees.html
+
+The implementation is new.
