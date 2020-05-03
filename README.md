@@ -1,2 +1,50 @@
-# mypyc-benchmarks
-Mypyc benchmarks
+# mypyc benchmarks
+
+This is a collection of mypyc benchmarks. They are intended to track
+performance of mypyc against interpreted CPython. They are also useful
+for validating that a mypyc enhancement results in a measurable
+performance improvement.
+
+*Some benchmarks are microbenchmarks that are only useful for finding
+big performance differences related to specific operations or language
+features. They don't reflect real-world performance.*
+
+## Prerequisites
+
+* Python 3.7 or later on Linux (or macOS?)
+* `mypyc` in `PATH`
+* A working Python C development environment
+
+## Running benchmarks
+
+Display the names of available benchmarks using `runbench.py --list`:
+
+```
+$ python3 runbench.py --list
+binary_trees
+bytes_call (micro)
+bytes_concat (micro)
+bytes_format (micro)
+bytes_indexing (micro)
+...
+```
+
+Microbenchmarks are distinguished by `(micro)`.
+
+Run a benchmark using `runbench.py <name>`:
+
+```
+$ python3 runbench.py richards
+...
+running richards
+......
+interpreted: 0.19436s (avg of 6 iterations; stdev 0.0026)
+compiled:    0.01953s (avg of 6 iterations; stdev 0.00043)
+
+compiled is 9.952x faster
+```
+
+## Documentation
+
+There is more information in the
+[documentation](https://github.com/mypyc/mypyc-benchmarks/blob/master/doc/benchmarks.rst).
