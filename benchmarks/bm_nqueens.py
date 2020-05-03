@@ -1,12 +1,15 @@
+# mypy: disallow-untyped-defs
 """Simple, brute-force N-Queens solver."""
 
-import pyperf
+from typing import Iterator, Iterable, Tuple, Optional
+
+from benchmarking import benchmark
 
 __author__ = "collinwinter@google.com (Collin Winter)"
 
 
 # Pure-Python implementation of itertools.permutations().
-def permutations(iterable, r=None):
+def permutations(iterable: Iterable[int], r: Optional[int] = None) -> Iterator[Tuple[int, ...]]:
     """permutations(range(3), 2) --> (0,1) (0,2) (1,0) (1,2) (2,0) (2,1)"""
     pool = tuple(iterable)
     n = len(pool)
@@ -31,7 +34,7 @@ def permutations(iterable, r=None):
 
 
 # From http://code.activestate.com/recipes/576647/
-def n_queens(queen_count):
+def do_n_queens(queen_count: int) -> Iterator[Tuple[int, ...]]:
     """N-Queens solver.
 
     Args:
@@ -50,13 +53,12 @@ def n_queens(queen_count):
             yield vec
 
 
-def bench_n_queens(queen_count):
-    list(n_queens(queen_count))
+def bench_n_queens(queen_count: int) -> None:
+    list(do_n_queens(queen_count))
 
 
-if __name__ == "__main__":
-    runner = pyperf.Runner()
-    runner.metadata['description'] = "Simple, brute-force N-Queens solver"
-
+@benchmark
+def nqueens() -> None:
     queen_count = 8
-    runner.bench_func('nqueens', bench_n_queens, queen_count)
+    for i in range(3):
+        bench_n_queens(queen_count)
