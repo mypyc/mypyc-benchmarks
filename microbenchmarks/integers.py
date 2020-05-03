@@ -1,4 +1,4 @@
-from benchlib import benchmark, Benchmark
+from benchmarking import benchmark, Benchmark
 
 
 @benchmark

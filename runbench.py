@@ -9,7 +9,7 @@ import time
 import subprocess
 import statistics
 
-from benchlib import Benchmark, BenchmarkInfo, benchmarks
+from benchmarking import Benchmark, BenchmarkInfo, benchmarks
 
 
 # Minimum total time (seconds) to run a benchmark
@@ -22,7 +22,7 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
                       binary: str,
                       compiled: bool) -> float:
     module = benchmark.module
-    program = 'import %s; import benchlib as bl; print(bl.run_once("%s"))' % (
+    program = 'import %s; import benchmarking as bm; print(bm.run_once("%s"))' % (
         module,
         benchmark.name,
     )
