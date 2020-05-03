@@ -40,3 +40,31 @@ def min_max_sequence() -> None:
             x = max(s)
             n += x
     assert n == 399800000, n
+
+
+@benchmark
+def map_builtin() -> None:
+    a = []
+    for j in range(100):
+        for i in range(10):
+            a.append([i * 2])
+            a.append([i, i + 2])
+            a.append([i] * 6)
+
+    n = 0
+    for i in range(100):
+        k = 0
+        for lst in a:
+            x = list(map(inc, lst))
+            if k == 0:
+                y = "".join(map(str, lst))
+                n += len(y)
+            n += x[-1]
+            k += 1
+            if k == 3:
+                k = 0
+    assert n == 2450000, n
+
+
+def inc(x: int) -> int:
+    return x + 1
