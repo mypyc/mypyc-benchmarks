@@ -2,7 +2,7 @@ from typing import List, NamedTuple, Callable, TypeVar
 import time
 
 
-class Benchmark:
+class BenchmarkContext:
     def __init__(self) -> None:
         self.start()
 
@@ -16,7 +16,7 @@ class Benchmark:
 BenchmarkInfo = NamedTuple("BenchmarkInfo", [
     ("name", str),
     ("module", str),
-    ("perform", Callable[[Benchmark], object]),
+    ("perform", Callable[[BenchmarkContext], object]),
 ])
 
 benchmarks = []  # type: List[BenchmarkInfo]
@@ -25,7 +25,7 @@ benchmarks = []  # type: List[BenchmarkInfo]
 T = TypeVar("T")
 
 
-def benchmark(func: Callable[[Benchmark], T]) -> Callable[[Benchmark], T]:
+def benchmark(func: Callable[[BenchmarkContext], T]) -> Callable[[BenchmarkContext], T]:
     name = func.__name__
     if name.startswith('__mypyc_'):
         name = name.replace('__mypyc_', '')
@@ -38,7 +38,7 @@ def benchmark(func: Callable[[Benchmark], T]) -> Callable[[Benchmark], T]:
 def run_once(benchmark_name: str) -> float:
     for benchmark in benchmarks:
         if benchmark.name == benchmark_name:
-            context = Benchmark()
+            context = BenchmarkContext()
             benchmark.perform(context)
             return context.elapsed_time()
     assert False, "unknown benchmark: %r" % benchmark_name

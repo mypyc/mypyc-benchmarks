@@ -9,7 +9,7 @@ import time
 import subprocess
 import statistics
 
-from benchmarking import Benchmark, BenchmarkInfo, benchmarks
+from benchmarking import BenchmarkInfo, benchmarks
 
 
 # Minimum total time (seconds) to run a benchmark
