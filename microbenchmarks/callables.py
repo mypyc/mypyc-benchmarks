@@ -7,15 +7,24 @@ from benchmarking import benchmark
 def nested_func() -> None:
     n = 0
 
+    for i in range(100 * 1000):
+        n += call_nested_fast()
+
+    assert n == 5500000, n
+
+
+def call_nested_fast() -> int:
+    n = 0
+
     def add(d: int) -> None:
         nonlocal n
         n += d
 
-    for i in range(1000 * 1000):
+    for i in range(10):
         add(i)
         n += 1
 
-    assert n == 500000500000, n
+    return n
 
 
 @benchmark
