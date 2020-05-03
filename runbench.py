@@ -125,7 +125,10 @@ def main() -> None:
     name, is_list = parse_args()
     if is_list:
         for benchmark in sorted(benchmarks):
-            print(benchmark.name)
+            suffix = ''
+            if benchmark.module.startswith('microbenchmarks.'):
+                suffix = ' (micro)'
+            print(benchmark.name + suffix)
         sys.exit(0)
 
     for benchmark in benchmarks:
