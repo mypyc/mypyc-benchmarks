@@ -110,15 +110,15 @@ def parse_args() -> Tuple[str, bool]:
 
 
 def main() -> None:
-    delete_binaries()
     import_all()
 
     name, is_list = parse_args()
-
     if is_list:
         for benchmark in sorted(benchmarks):
             print(benchmark.name)
         sys.exit(0)
+
+    delete_binaries()
 
     for benchmark in benchmarks:
         if benchmark.name == name:
