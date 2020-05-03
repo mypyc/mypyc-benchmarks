@@ -53,3 +53,13 @@ hexiom
 Solver of Hexiom board game (level 25 hard coded).
 
 Adapted to mypyc from https://github.com/python/pyperformance.
+
+
+nqueens
+-------
+
+Simple, brute-force N-Queens solver.
+
+See `Eight queens puzzle <https://en.wikipedia.org/wiki/Eight_queens_puzzle>`_.
+
+Adapted to mypyc from https://github.com/python/pyperformance.
