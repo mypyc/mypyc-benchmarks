@@ -11,7 +11,7 @@ from reporting.common import get_csv_path, get_hardware_id
 
 def write_csv_header(fnam: str) -> None:
     with open(fnam, "w") as f:
-        f.write("Timestamp,Runtime (s),Runtime (stddev),Mypyc commit,Hardware\n")
+        f.write("Timestamp,Runtime (s),Runtime (stddev),Mypyc commit,Python version,Hardware\n")
 
 
 def write_csv_line(fnam: str,
@@ -23,11 +23,12 @@ def write_csv_line(fnam: str,
     if not os.path.exists(fnam):
         write_csv_header(fnam)
     with open(fnam, "a") as f:
-        f.write("%s,%.6f,%.6f,%s,%s\n" % (
+        f.write("%s,%.6f,%.6f,%s,%s,%s\n" % (
             timestamp,
             runtime,
             stddev,
             commit,
+            sys.version.split()[0],
             get_hardware_id(),
         ))
 
