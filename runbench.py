@@ -20,7 +20,8 @@ MIN_ITER = 5
 
 def run_in_subprocess(benchmark: BenchmarkInfo,
                       binary: str,
-                      compiled: bool) -> float:
+                      compiled: bool,
+                      priority: bool = False) -> float:
     module = benchmark.module
     program = 'import %s; import benchmarking as bm; print("\\nelapsed:", bm.run_once("%s"))' % (
         module,
@@ -29,8 +30,12 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
 
     if not compiled:
         os.rename(binary, binary + '.tmp')
+    cmd = ['python3', '-c', program]
+    if priority:
+        # Use nice to increase process priority.
+        cmd = ['sudo', 'nice', '-n', '-5'] + cmd
     try:
-        result = subprocess.run(['python3', '-c', program], check=True, stdout=subprocess.PIPE)
+        result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE)
     finally:
         if not compiled:
             os.rename(binary + '.tmp', binary)
@@ -44,7 +49,7 @@ def parse_elapsed_time(output: bytes) -> float:
     return float(m.group(1))
 
 
-def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool) -> None:
+def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool, priority: bool) -> None:
     if not raw_output:
         print('running %s' % benchmark.name)
 
@@ -56,8 +61,8 @@ def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool) -> No
     interpreted = []
     n = 0
     while True:
-        t1 = run_in_subprocess(benchmark, binary, compiled=True)
-        t2 = run_in_subprocess(benchmark, binary, compiled=False)
+        t1 = run_in_subprocess(benchmark, binary, compiled=True, priority=priority)
+        t2 = run_in_subprocess(benchmark, binary, compiled=False, priority=priority)
         if not raw_output:
             sys.stdout.write('.')
             sys.stdout.flush()
@@ -118,16 +123,18 @@ def delete_binaries() -> None:
         os.remove(fnam)
 
 
-def parse_args() -> Tuple[str, bool, bool]:
+def parse_args() -> Tuple[str, bool, bool, bool]:
     parser = argparse.ArgumentParser()
     parser.add_argument('benchmark', nargs='?')
     parser.add_argument('--list', action='store_true', help='show names of all benchmarks')
     parser.add_argument('--raw', action='store_true', help='use machine-readable raw output')
+    parser.add_argument('--priority', action='store_true',
+                        help="increase process priority using 'nice' (uses sudo)")
     args = parser.parse_args()
     if not args.list and not args.benchmark:
         parser.print_help()
         sys.exit(2)
-    return args.benchmark, args.list, args.raw
+    return args.benchmark, args.list, args.raw, args.priority
 
 
 def main() -> None:
@@ -137,7 +144,7 @@ def main() -> None:
     # Import before parsing args so that syntax errors get reported.
     import_all()
 
-    name, is_list, raw_output = parse_args()
+    name, is_list, raw_output, is_priority = parse_args()
     if is_list:
         for benchmark in sorted(benchmarks):
             suffix = ''
@@ -153,7 +160,7 @@ def main() -> None:
         sys.exit('unknown benchmark %r' % name)
 
     binary = compile_benchmark(benchmark.module, raw_output)
-    run_benchmark(benchmark, binary, raw_output)
+    run_benchmark(benchmark, binary, raw_output, is_priority)
 
 
 if __name__ == "__main__":
