@@ -45,6 +45,10 @@ def run_bench(benchmark: str, mypy_repo: str) -> Tuple[float, float]:
     return float(fields[0]), 100.0 * float(fields[5]) / float(fields[4])
 
 
+def sync_typeshed(mypy_repo: str) -> None:
+    subprocess.check_call(['git', 'submodule', 'update'], cwd=mypy_repo)
+
+
 def parse_args() -> Tuple[str, str, str, str, str]:
     parser = argparse.ArgumentParser()
     parser.add_argument("benchmark")
@@ -64,6 +68,7 @@ def main() -> None:
     for commit in commits:
         now = datetime.utcnow()
         checkout_commit(mypy_repo, commit)
+        sync_typeshed(mypy_repo)
         runtime, stddev = run_bench(benchmark, mypy_repo)
         fnam = get_csv_path(data_repo, benchmark)
         write_csv_line(fnam, benchmark, now, runtime, stddev, commit)
