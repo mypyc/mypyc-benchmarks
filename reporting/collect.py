@@ -49,6 +49,12 @@ def sync_typeshed(mypy_repo: str) -> None:
     subprocess.check_call(['git', 'submodule', 'update'], cwd=mypy_repo)
 
 
+def install_mypy_deps(mypy_repo: str) -> None:
+    subprocess.check_call(
+        ['pip', 'install', '--quiet', '--disable-pip-version-check',
+         '-r', 'mypy-requirements.txt'], cwd=mypy_repo)
+
+
 def parse_args() -> Tuple[str, str, str, str, str]:
     parser = argparse.ArgumentParser()
     parser.add_argument("benchmark")
@@ -69,6 +75,7 @@ def main() -> None:
         now = datetime.utcnow()
         checkout_commit(mypy_repo, commit)
         sync_typeshed(mypy_repo)
+        install_mypy_deps(mypy_repo)
         runtime, stddev = run_bench(benchmark, mypy_repo)
         fnam = get_csv_path(data_repo, benchmark)
         write_csv_line(fnam, benchmark, now, runtime, stddev, commit)
