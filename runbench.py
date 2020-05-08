@@ -44,8 +44,9 @@ def parse_elapsed_time(output: bytes) -> float:
     return float(m.group(1))
 
 
-def run_benchmark(benchmark: BenchmarkInfo, binary: str) -> None:
-    print('running %s' % benchmark.name)
+def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool) -> None:
+    if not raw_output:
+        print('running %s' % benchmark.name)
 
     # Warm up
     run_in_subprocess(benchmark, binary, compiled=False)
@@ -57,29 +58,42 @@ def run_benchmark(benchmark: BenchmarkInfo, binary: str) -> None:
     while True:
         t1 = run_in_subprocess(benchmark, binary, compiled=True)
         t2 = run_in_subprocess(benchmark, binary, compiled=False)
-        sys.stdout.write('.')
-        sys.stdout.flush()
+        if not raw_output:
+            sys.stdout.write('.')
+            sys.stdout.flush()
         n += 1
         compiled.append(t1)
         interpreted.append(t2)
         if sum(interpreted) >= MIN_TIME and n >= MIN_ITER:
             break
-    print()
-    stdev = statistics.stdev(interpreted)
-    print('interpreted: %.5fs (avg of %d iterations; stdev %.2g)' % (
-        sum(interpreted) / n, n, stdev)
-    )
-    stdev = statistics.stdev(compiled)
-    print('compiled:    %.5fs (avg of %d iterations; stdev %.2g)' % (
-        sum(compiled) / n, n, stdev)
-    )
-    print()
-    print('compiled is %.3fx faster' % (sum(interpreted) / sum(compiled)))
+    if not raw_output:
+        print()
+    stdev1 = statistics.stdev(interpreted)
+    stdev2 = statistics.stdev(compiled)
+    relative = sum(interpreted) / sum(compiled)
+    if not raw_output:
+        print('interpreted: %.5fs (avg of %d iterations; stdev %.2g)' % (
+            sum(interpreted) / n, n, stdev1)
+        )
+        print('compiled:    %.5fs (avg of %d iterations; stdev %.2g)' % (
+            sum(compiled) / n, n, stdev2)
+        )
+        print()
+        print('compiled is %.3fx faster' % relative)
+    else:
+        print('%.6f %d %.6f %.6f %.6f %.6f' % (
+            relative,
+            n,
+            sum(interpreted) / n,
+            stdev1,
+            sum(compiled) / n,
+            stdev2))
 
 
-def compile_benchmark(module: str) -> str:
+def compile_benchmark(module: str, raw_output: bool) -> str:
     fnam = module.replace('.', '/') + '.py'
-    print('compiling %s...' % module)
+    if not raw_output:
+        print('compiling %s...' % module)
     subprocess.run(['mypyc', fnam], check=True)
     pattern = module.replace('.', '/') + '.*.so'
     paths = glob.glob(pattern)
@@ -104,15 +118,16 @@ def delete_binaries() -> None:
         os.remove(fnam)
 
 
-def parse_args() -> Tuple[str, bool]:
+def parse_args() -> Tuple[str, bool, bool]:
     parser = argparse.ArgumentParser()
     parser.add_argument('benchmark', nargs='?')
     parser.add_argument('--list', action='store_true', help='show names of all benchmarks')
+    parser.add_argument('--raw', action='store_true', help='use machine-readable raw output')
     args = parser.parse_args()
     if not args.list and not args.benchmark:
         parser.print_help()
         sys.exit(2)
-    return args.benchmark, args.list
+    return args.benchmark, args.list, args.raw
 
 
 def main() -> None:
@@ -122,7 +137,7 @@ def main() -> None:
     # Import before parsing args so that syntax errors get reported.
     import_all()
 
-    name, is_list = parse_args()
+    name, is_list, raw_output = parse_args()
     if is_list:
         for benchmark in sorted(benchmarks):
             suffix = ''
@@ -137,8 +152,8 @@ def main() -> None:
     else:
         sys.exit('unknown benchmark %r' % name)
 
-    binary = compile_benchmark(benchmark.module)
-    run_benchmark(benchmark, binary)
+    binary = compile_benchmark(benchmark.module, raw_output)
+    run_benchmark(benchmark, binary, raw_output)
 
 
 if __name__ == "__main__":
