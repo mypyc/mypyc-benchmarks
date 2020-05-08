@@ -20,3 +20,9 @@ def get_hardware_id() -> str:
             return 'Intel Core i7-2600K (64-bit)'
     # Give up if it's not the known configuration.
     return 'UNKNOWN'
+
+
+def get_os_version() -> str:
+    output = subprocess.check_output(['lsb_release', '-d']).decode("ascii")
+    output = output.strip()
+    return ' '.join(output.split()[1:])

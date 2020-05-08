@@ -5,13 +5,14 @@ import os
 import subprocess
 import sys
 
-from reporting.gitutil import get_commit_range, checkout_commit
-from reporting.common import get_csv_path, get_hardware_id
+from reporting.gitutil import get_commit_range, checkout_commit, get_current_commit
+from reporting.common import get_csv_path, get_hardware_id, get_os_version
 
 
 def write_csv_header(fnam: str) -> None:
     with open(fnam, "w") as f:
-        f.write("Timestamp,Runtime (s),Runtime (stddev),Mypyc commit,Python version,Hardware\n")
+        f.write("Timestamp,Runtime (s),Runtime (stddev),Mypy commit," +
+                "Benchmark commit,Python version,Hardware,OS\n")
 
 
 def write_csv_line(fnam: str,
@@ -19,17 +20,20 @@ def write_csv_line(fnam: str,
                    timestamp: datetime,
                    runtime: float,
                    stddev: float,
-                   commit: str) -> None:
+                   mypy_commit: str,
+                   benchmark_commit: str) -> None:
     if not os.path.exists(fnam):
         write_csv_header(fnam)
     with open(fnam, "a") as f:
-        f.write("%s,%.6f,%.6f,%s,%s,%s\n" % (
+        f.write("%s,%.6f,%.6f,%s,%s,%s,%s,%s\n" % (
             timestamp,
             runtime,
             stddev,
-            commit,
+            mypy_commit,
+            benchmark_commit,
             sys.version.split()[0],
             get_hardware_id(),
+            get_os_version(),
         ))
 
 
@@ -70,17 +74,18 @@ def parse_args() -> Tuple[str, str, str, str, str]:
 
 def main() -> None:
     benchmark, mypy_repo, data_repo, start_commit, end_commit = parse_args()
-    commits = get_commit_range(mypy_repo, start_commit, end_commit)
-    if not commits:
+    mypy_commits = get_commit_range(mypy_repo, start_commit, end_commit)
+    if not mypy_commits:
         sys.exit("Could not find any commits")
-    for commit in commits:
+    benchmark_commit = get_current_commit(".")
+    for mypy_commit in mypy_commits:
         now = datetime.utcnow()
-        checkout_commit(mypy_repo, commit)
+        checkout_commit(mypy_repo, mypy_commit)
         sync_typeshed(mypy_repo)
         install_mypy_deps(mypy_repo)
         runtime, stddev = run_bench(benchmark, mypy_repo)
         fnam = get_csv_path(data_repo, benchmark)
-        write_csv_line(fnam, benchmark, now, runtime, stddev, commit)
+        write_csv_line(fnam, benchmark, now, runtime, stddev, mypy_commit, benchmark_commit)
 
 
 if __name__ == "__main__":

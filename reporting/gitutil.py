@@ -16,3 +16,8 @@ def get_commit_range(repo_dir: str, start_commit: str, end_commit: str) -> List[
         if line.startswith('commit '):
             commits.append(line.split()[1])
     return commits
+
+
+def get_current_commit(repo_dir: str) -> str:
+    output = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo_dir)
+    return output.decode("ascii").strip()
