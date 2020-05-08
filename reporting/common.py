@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 
 
@@ -26,3 +27,11 @@ def get_os_version() -> str:
     output = subprocess.check_output(['lsb_release', '-d']).decode("ascii")
     output = output.strip()
     return ' '.join(output.split()[1:])
+
+
+def get_c_compiler_version(cc: str) -> str:
+    output = subprocess.check_output([cc, '--version']).decode("utf-8")
+    # This seems to work for gcc and clang, at least.
+    m = re.search(r'\b[0-9]+([-.][A-Za-z0-9]+)*\b', output)
+    assert m is not None
+    return m.group()

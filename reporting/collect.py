@@ -6,13 +6,17 @@ import subprocess
 import sys
 
 from reporting.gitutil import get_commit_range, checkout_commit, get_current_commit
-from reporting.common import get_csv_path, get_hardware_id, get_os_version
+from reporting.common import get_csv_path, get_hardware_id, get_os_version, get_c_compiler_version
+
+
+# Use clang since it tends to generate faster code.
+CC = "clang"
 
 
 def write_csv_header(fnam: str) -> None:
     with open(fnam, "w") as f:
         f.write("Timestamp,Runtime (s),Runtime (stddev),Mypy commit," +
-                "Benchmark commit,Python version,Hardware,OS\n")
+                "Benchmark commit,Python version,Hardware,OS,C compiler\n")
 
 
 def write_csv_line(fnam: str,
@@ -25,7 +29,7 @@ def write_csv_line(fnam: str,
     if not os.path.exists(fnam):
         write_csv_header(fnam)
     with open(fnam, "a") as f:
-        f.write("%s,%.6f,%.6f,%s,%s,%s,%s,%s\n" % (
+        f.write("%s,%.6f,%.6f,%s,%s,%s,%s,%s,%s\n" % (
             timestamp,
             runtime,
             stddev,
@@ -34,6 +38,7 @@ def write_csv_line(fnam: str,
             sys.version.split()[0],
             get_hardware_id(),
             get_os_version(),
+            '%s %s' % (CC, get_c_compiler_version(CC)),
         ))
 
 
@@ -44,6 +49,7 @@ def run_bench(benchmark: str, mypy_repo: str) -> Tuple[float, float]:
     """
     env = os.environ.copy()
     env['PYTHONPATH'] = mypy_repo
+    env['CC'] = CC
     output = subprocess.check_output(
         ['python', 'runbench.py', '--raw', benchmark], env=env).decode("ascii")
     last_line = output.rstrip().splitlines()[-1]
