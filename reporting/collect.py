@@ -1,3 +1,8 @@
+"""Utility that collects mypyc benchmark results for a range of commits.
+
+Run with --help for more information.
+"""
+
 from typing import Tuple
 from datetime import datetime
 import argparse
@@ -68,12 +73,21 @@ def install_mypy_deps(mypy_repo: str) -> None:
 
 
 def parse_args() -> Tuple[str, str, str, str, str]:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("benchmark")
-    parser.add_argument("mypy_repo")
-    parser.add_argument("data_repo")
-    parser.add_argument("start_commit")
-    parser.add_argument("end_commit")
+    parser = argparse.ArgumentParser(
+        description="""Run a mypyc benchmark for a range of commits, and append results to a .csv
+                       file at the path '<data_repo>/data/<benchmark>.csv'. Note that this
+                       will check out the commits in the target mypy repository, and this
+                       will also install mypy dependencies in the current virtualenv!""")
+    parser.add_argument(
+        "benchmark",
+        help="""benchmark name, such as 'richards' (use 'runbench.py --list' to show valid
+                values)""")
+    parser.add_argument("mypy_repo", help="target mypy repository (this will be modified!)")
+    parser.add_argument(
+        "data_repo",
+        help="target data repository where output will be written (this will be modified!)")
+    parser.add_argument("start_commit", help="commits reachable from here are skipped")
+    parser.add_argument("end_commit", help="final commit to include")
     args = parser.parse_args()
     return args.benchmark, args.mypy_repo, args.data_repo, args.start_commit, args.end_commit
 
