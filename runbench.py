@@ -1,5 +1,5 @@
 from importlib import import_module
-from typing import Tuple
+from typing import Tuple, List
 import argparse
 import glob
 import re
@@ -13,9 +13,9 @@ from benchmarking import BenchmarkInfo, benchmarks
 
 
 # Minimum total time (seconds) to run a benchmark
-MIN_TIME = 1.0
+MIN_TIME = 2.0
 # Minimum number of iterations to run a benchmark
-MIN_ITER = 5
+MIN_ITER = 10
 
 
 def run_in_subprocess(benchmark: BenchmarkInfo,
@@ -49,6 +49,12 @@ def parse_elapsed_time(output: bytes) -> float:
     return float(m.group(1))
 
 
+def smoothen(a: List[float]) -> List[float]:
+    # Keep the lowest half of values
+    return sorted(a)[: (len(a) + 1) // 2]
+
+
+
 def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool, priority: bool) -> None:
     if not raw_output:
         print('running %s' % benchmark.name)
@@ -73,6 +79,10 @@ def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool, prior
             break
     if not raw_output:
         print()
+    interpreted = smoothen(interpreted)
+    compiled = smoothen(compiled)
+    assert len(interpreted) == len(compiled)
+    n = len(interpreted)
     stdev1 = statistics.stdev(interpreted)
     stdev2 = statistics.stdev(compiled)
     mean1 = sum(interpreted) / n
