@@ -38,11 +38,16 @@ $ python3 runbench.py richards
 ...
 running richards
 ......
-interpreted: 0.19436s (avg of 6 iterations; stdev 0.0026)
-compiled:    0.01953s (avg of 6 iterations; stdev 0.00043)
+interpreted: 0.190326s (avg of 6 iterations; stdev 1%)
+compiled:    0.019284s (avg of 6 iterations; stdev 1.6%)
 
-compiled is 9.952x faster
+compiled is 9.870x faster
 ```
+
+This runs the benchmark in both compiled and interpreted modes, and
+reports the relative performance.
+
+Use `runbench -c <name>` to only run the compiled benchmark.
 
 ## Documentation
 
