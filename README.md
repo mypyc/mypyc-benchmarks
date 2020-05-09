@@ -31,10 +31,10 @@ bytes_indexing (micro)
 
 Microbenchmarks are distinguished by `(micro)`.
 
-Run a benchmark using `runbench.py <name>`:
+Run a benchmark using `runbench.py --mypy-repo <dir> <name>`:
 
 ```
-$ python3 runbench.py richards
+$ python3 runbench.py --mypy-repo ~/src/mypy richards
 ...
 running richards
 ......
@@ -44,10 +44,14 @@ compiled:    0.019284s (avg of 6 iterations; stdev 1.6%)
 compiled is 9.870x faster
 ```
 
-This runs the benchmark in both compiled and interpreted modes, and
-reports the relative performance.
+This runs the benchmark in both compiled and interpreted modes using
+the mypyc from the given mypy repository, and reports the relative
+performance.
 
-Use `runbench -c <name>` to only run the compiled benchmark.
+Use `runbench.py -c ...` to only run the compiled benchmark.
+
+Run a benchmark first using the mypy master branch and then your local
+branch to see how well your branch does relative to master.
 
 ## Documentation
 
