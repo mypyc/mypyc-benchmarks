@@ -1,9 +1,9 @@
 """Utility that collects mypyc benchmark results for a range of commits.
 
-Run with --help for more information.
+Run "python3 -m reporting.collect --help" for more information.
 """
 
-from typing import Tuple
+from typing import Optional, Tuple
 from datetime import datetime
 import argparse
 import os
@@ -16,6 +16,10 @@ from reporting.common import get_csv_path, get_hardware_id, get_os_version, get_
 
 # Use clang since it tends to generate faster code.
 CC = "clang"
+
+# Minimum number of iterations for an interpreted benchmark (this needs to be high,
+# since interpreted measurements are noisier than compiled)
+MIN_INTERPRETED_ITER = 200
 
 
 def write_csv_header(fnam: str) -> None:
@@ -47,19 +51,31 @@ def write_csv_line(fnam: str,
         ))
 
 
-def run_bench(benchmark: str, mypy_repo: str) -> Tuple[float, float]:
-    """Run benchmark in compiled and interpreted modes.
+def run_bench(benchmark: str,
+              mypy_repo: Optional[str],
+              compiled: bool = True) -> Tuple[float, float]:
+    """Run benchmark (in compiled or interpreted mode).
 
-    Return (relative speed of compiled, % standard deviation of compiled runtimes).
+    Return (time per iteration, % standard deviation).
     """
     env = os.environ.copy()
-    env['PYTHONPATH'] = mypy_repo
-    env['CC'] = CC
-    output = subprocess.check_output(
-        ['python', 'runbench.py', '--raw', benchmark], env=env).decode("ascii")
+    if mypy_repo:
+        env['PYTHONPATH'] = mypy_repo
+    if compiled:
+        env['CC'] = CC
+    cmd = ['python', 'runbench.py', '--raw']
+    if compiled:
+        cmd.append('-c')
+    else:
+        cmd.extend(['-i', '--min-iter', str(MIN_INTERPRETED_ITER)])
+    cmd.append(benchmark)
+    output = subprocess.check_output(cmd, env=env).decode("ascii")
     last_line = output.rstrip().splitlines()[-1]
     fields = last_line.split()
-    return float(fields[0]), 100.0 * float(fields[5]) / float(fields[4])
+    if compiled:
+        return float(fields[3]), 100.0 * float(fields[4]) / float(fields[3])
+    else:
+        return float(fields[1]), 100.0 * float(fields[2]) / float(fields[1])
 
 
 def sync_typeshed(mypy_repo: str) -> None:
