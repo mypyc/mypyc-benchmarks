@@ -1,5 +1,5 @@
 from importlib import import_module
-from typing import Tuple, List
+from typing import Tuple, List, NamedTuple, Optional
 import argparse
 import glob
 import re
@@ -19,7 +19,7 @@ MIN_ITER = 10
 
 
 def run_in_subprocess(benchmark: BenchmarkInfo,
-                      binary: str,
+                      binary: Optional[str],
                       compiled: bool,
                       priority: bool = False) -> float:
     module = benchmark.module
@@ -28,7 +28,7 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
         benchmark.name,
     )
 
-    if not compiled:
+    if not compiled and binary:
         os.rename(binary, binary + '.tmp')
     cmd = ['python3', '-c', program]
     if priority:
@@ -37,7 +37,7 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
     try:
         result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE)
     finally:
-        if not compiled:
+        if not compiled and binary:
             os.rename(binary + '.tmp', binary)
 
     return parse_elapsed_time(result.stdout)
@@ -55,55 +55,75 @@ def smoothen(a: List[float]) -> List[float]:
 
 
 
-def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool, priority: bool) -> None:
+def run_benchmark(benchmark: BenchmarkInfo,
+                  binary: Optional[str],
+                  raw_output: bool,
+                  priority: bool,
+                  interpreted: bool,
+                  compiled: bool) -> None:
+    assert compiled or interpreted
     if not raw_output:
         print('running %s' % benchmark.name)
 
     # Warm up
-    run_in_subprocess(benchmark, binary, compiled=False)
-    run_in_subprocess(benchmark, binary, compiled=True)
+    if interpreted:
+        run_in_subprocess(benchmark, binary, compiled=False)
+    if compiled:
+        run_in_subprocess(benchmark, binary, compiled=True)
 
-    compiled = []
-    interpreted = []
+    times_compiled = []
+    times_interpreted = []
     n = 0
     while True:
-        t1 = run_in_subprocess(benchmark, binary, compiled=True, priority=priority)
-        t2 = run_in_subprocess(benchmark, binary, compiled=False, priority=priority)
+        if compiled:
+            t = run_in_subprocess(benchmark, binary, compiled=True, priority=priority)
+            times_compiled.append(t)
+        if interpreted:
+            t = run_in_subprocess(benchmark, binary, compiled=False, priority=priority)
+            times_interpreted.append(t)
         if not raw_output:
             sys.stdout.write('.')
             sys.stdout.flush()
         n += 1
-        compiled.append(t1)
-        interpreted.append(t2)
-        if sum(interpreted) >= MIN_TIME and n >= MIN_ITER:
+        long_enough = sum(times_interpreted) >= MIN_TIME or sum(times_compiled) >= MIN_TIME
+        if long_enough and n >= MIN_ITER:
             break
     if not raw_output:
         print()
-    interpreted = smoothen(interpreted)
-    compiled = smoothen(compiled)
-    assert len(interpreted) == len(compiled)
-    n = len(interpreted)
-    stdev1 = statistics.stdev(interpreted)
-    stdev2 = statistics.stdev(compiled)
-    mean1 = sum(interpreted) / n
-    mean2 = sum(compiled) / n
-    relative = sum(interpreted) / sum(compiled)
-    if not raw_output:
-        print('interpreted: %.5fs (avg of %d iterations; stdev %.2g%%)' % (
-            mean1, n, 100.0 * stdev1 / mean1)
-        )
-        print('compiled:    %.5fs (avg of %d iterations; stdev %.2g%%)' % (
-            mean2, n, 100.0 * stdev2 / mean2)
-        )
-        print()
-        print('compiled is %.3fx faster' % relative)
+    times_interpreted = smoothen(times_interpreted)
+    times_compiled = smoothen(times_compiled)
+    n = max(len(times_interpreted), len(times_compiled))
+    if interpreted:
+        stdev1 = statistics.stdev(times_interpreted)
+        mean1 = sum(times_interpreted) / n
     else:
-        print('%.6f %d %.6f %.6f %.6f %.6f' % (
-            relative,
+        stdev1 = 0.0
+        mean1 = 0.0
+    if compiled:
+        stdev2 = statistics.stdev(times_compiled)
+        mean2 = sum(times_compiled) / n
+    else:
+        stdev2 = 0.0
+        mean2 = 0.0
+    if not raw_output:
+        if interpreted:
+            print('interpreted: %.6fs (avg of %d iterations; stdev %.2g%%)' % (
+                mean1, n, 100.0 * stdev1 / mean1)
+            )
+        if compiled:
+            print('compiled:    %.6fs (avg of %d iterations; stdev %.2g%%)' % (
+                mean2, n, 100.0 * stdev2 / mean2)
+            )
+        if compiled and interpreted:
+            print()
+            relative = sum(times_interpreted) / sum(times_compiled)
+            print('compiled is %.3fx faster' % relative)
+    else:
+        print('%d %.6f %.6f %.6f %.6f' % (
             n,
-            sum(interpreted) / n,
+            sum(times_interpreted) / n,
             stdev1,
-            sum(compiled) / n,
+            sum(times_compiled) / n,
             stdev2))
 
 
@@ -135,18 +155,39 @@ def delete_binaries() -> None:
         os.remove(fnam)
 
 
-def parse_args() -> Tuple[str, bool, bool, bool]:
+class Args(NamedTuple):
+    benchmark: str
+    is_list: bool
+    raw: bool
+    priority: bool
+    compiled_only: bool
+    interpreted_only: bool
+
+
+def parse_args() -> Args:
     parser = argparse.ArgumentParser()
     parser.add_argument('benchmark', nargs='?')
     parser.add_argument('--list', action='store_true', help='show names of all benchmarks')
     parser.add_argument('--raw', action='store_true', help='use machine-readable raw output')
     parser.add_argument('--priority', action='store_true',
                         help="increase process priority using 'nice' (uses sudo)")
-    args = parser.parse_args()
-    if not args.list and not args.benchmark:
+    parser.add_argument('-c', action='store_true',
+                        help="only run in compiled mode")
+    parser.add_argument('-i', action='store_true',
+                        help="only run in interpreted mode")
+    parsed = parser.parse_args()
+    if not parsed.list and not parsed.benchmark:
         parser.print_help()
         sys.exit(2)
-    return args.benchmark, args.list, args.raw, args.priority
+    args = Args(parsed.benchmark,
+                parsed.list,
+                parsed.raw,
+                parsed.priority,
+                parsed.c,
+                parsed.i)
+    if args.compiled_only and args.interpreted_only:
+        sys.exit("error: only give one of -c and -i")
+    return args
 
 
 def main() -> None:
@@ -156,8 +197,8 @@ def main() -> None:
     # Import before parsing args so that syntax errors get reported.
     import_all()
 
-    name, is_list, raw_output, is_priority = parse_args()
-    if is_list:
+    args = parse_args()
+    if args.is_list:
         for benchmark in sorted(benchmarks):
             suffix = ''
             if benchmark.module.startswith('microbenchmarks.'):
@@ -165,14 +206,26 @@ def main() -> None:
             print(benchmark.name + suffix)
         sys.exit(0)
 
+    name = args.benchmark
     for benchmark in benchmarks:
         if benchmark.name == name:
             break
     else:
         sys.exit('unknown benchmark %r' % name)
 
-    binary = compile_benchmark(benchmark.module, raw_output)
-    run_benchmark(benchmark, binary, raw_output, is_priority)
+    if args.interpreted_only:
+        binary = None
+    else:
+        binary = compile_benchmark(benchmark.module, args.raw)
+
+    run_benchmark(
+        benchmark,
+        binary,
+        args.raw,
+        args.priority,
+        not args.compiled_only,
+        not args.interpreted_only,
+    )
 
 
 if __name__ == "__main__":
