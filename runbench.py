@@ -75,13 +75,15 @@ def run_benchmark(benchmark: BenchmarkInfo, binary: str, raw_output: bool, prior
         print()
     stdev1 = statistics.stdev(interpreted)
     stdev2 = statistics.stdev(compiled)
+    mean1 = sum(interpreted) / n
+    mean2 = sum(compiled) / n
     relative = sum(interpreted) / sum(compiled)
     if not raw_output:
-        print('interpreted: %.5fs (avg of %d iterations; stdev %.2g)' % (
-            sum(interpreted) / n, n, stdev1)
+        print('interpreted: %.5fs (avg of %d iterations; stdev %.2g%%)' % (
+            mean1, n, 100.0 * stdev1 / mean1)
         )
-        print('compiled:    %.5fs (avg of %d iterations; stdev %.2g)' % (
-            sum(compiled) / n, n, stdev2)
+        print('compiled:    %.5fs (avg of %d iterations; stdev %.2g%%)' % (
+            mean2, n, 100.0 * stdev2 / mean2)
         )
         print()
         print('compiled is %.3fx faster' % relative)
