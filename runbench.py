@@ -60,7 +60,8 @@ def run_benchmark(benchmark: BenchmarkInfo,
                   raw_output: bool,
                   priority: bool,
                   interpreted: bool,
-                  compiled: bool) -> None:
+                  compiled: bool,
+                  min_iter: int) -> None:
     assert compiled or interpreted
     if not raw_output:
         print('running %s' % benchmark.name)
@@ -86,7 +87,7 @@ def run_benchmark(benchmark: BenchmarkInfo,
             sys.stdout.flush()
         n += 1
         long_enough = sum(times_interpreted) >= MIN_TIME or sum(times_compiled) >= MIN_TIME
-        if long_enough and n >= MIN_ITER:
+        if long_enough and n >= min_iter:
             break
     if not raw_output:
         print()
@@ -162,11 +163,12 @@ class Args(NamedTuple):
     priority: bool
     compiled_only: bool
     interpreted_only: bool
+    min_iter: int
 
 
 def parse_args() -> Args:
     parser = argparse.ArgumentParser()
-    parser.add_argument('benchmark', nargs='?')
+    parser.add_argument('benchmark', nargs='?', help="name of benchmark to run")
     parser.add_argument('--list', action='store_true', help='show names of all benchmarks')
     parser.add_argument('--raw', action='store_true', help='use machine-readable raw output')
     parser.add_argument('--priority', action='store_true',
@@ -175,6 +177,9 @@ def parse_args() -> Args:
                         help="only run in compiled mode")
     parser.add_argument('-i', action='store_true',
                         help="only run in interpreted mode")
+    parser.add_argument('--min-iter', type=int, default=MIN_ITER, metavar="N",
+                        help="""set minimum number of iterations (half of the results
+                                will be discarded; default %d)""" % MIN_ITER)
     parsed = parser.parse_args()
     if not parsed.list and not parsed.benchmark:
         parser.print_help()
@@ -184,7 +189,8 @@ def parse_args() -> Args:
                 parsed.raw,
                 parsed.priority,
                 parsed.c,
-                parsed.i)
+                parsed.i,
+                parsed.min_iter)
     if args.compiled_only and args.interpreted_only:
         sys.exit("error: only give one of -c and -i")
     return args
@@ -225,6 +231,7 @@ def main() -> None:
         args.priority,
         not args.compiled_only,
         not args.interpreted_only,
+        args.min_iter,
     )
 
 
