@@ -59,11 +59,11 @@ def run_bench(benchmark: str,
     Return (time per iteration, % standard deviation).
     """
     env = os.environ.copy()
-    if mypy_repo:
-        env['PYTHONPATH'] = mypy_repo
     if compiled:
         env['CC'] = CC
     cmd = ['python', 'runbench.py', '--raw']
+    if mypy_repo:
+        cmd.extend(["--mypy-repo", mypy_repo])
     if compiled:
         cmd.append('-c')
     else:

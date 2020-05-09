@@ -128,11 +128,19 @@ def run_benchmark(benchmark: BenchmarkInfo,
             stdev2))
 
 
-def compile_benchmark(module: str, raw_output: bool) -> str:
+def compile_benchmark(module: str, raw_output: bool, mypy_repo: Optional[str]) -> str:
     fnam = module.replace('.', '/') + '.py'
     if not raw_output:
         print('compiling %s...' % module)
-    subprocess.run(['mypyc', fnam], check=True)
+    env = os.environ.copy()
+    if mypy_repo:
+        # Use mypyc from specific mypy repository.
+        cmd = os.path.join(mypy_repo, 'scripts', 'mypyc')
+        env['PYTHONPATH'] = mypy_repo
+    else:
+        # Find 'mypyc' via PATH and use PYTHONPATH set by caller.
+        cmd = 'mypyc'
+    subprocess.run([cmd, fnam], check=True)
     pattern = module.replace('.', '/') + '.*.so'
     paths = glob.glob(pattern)
     assert len(paths) == 1
@@ -158,6 +166,7 @@ def delete_binaries() -> None:
 
 class Args(NamedTuple):
     benchmark: str
+    mypy_repo: Optional[str]
     is_list: bool
     raw: bool
     priority: bool
@@ -167,8 +176,13 @@ class Args(NamedTuple):
 
 
 def parse_args() -> Args:
-    parser = argparse.ArgumentParser()
-    parser.add_argument('benchmark', nargs='?', help="name of benchmark to run")
+    parser = argparse.ArgumentParser(
+        description="Run a mypyc benchmark in compiled and/or interpreted modes.")
+    parser.add_argument('benchmark', nargs='?',
+                        help="name of benchmark to run (use --list to show options)")
+    parser.add_argument('--mypy-repo', metavar="DIR", type=str, default=None,
+                        help="""use mypyc from a mypy git repository (by default, use mypyc
+                                found via PATH and PYTHONPATH)""")
     parser.add_argument('--list', action='store_true', help='show names of all benchmarks')
     parser.add_argument('--raw', action='store_true', help='use machine-readable raw output')
     parser.add_argument('--priority', action='store_true',
@@ -185,6 +199,7 @@ def parse_args() -> Args:
         parser.print_help()
         sys.exit(2)
     args = Args(parsed.benchmark,
+                parsed.mypy_repo,
                 parsed.list,
                 parsed.raw,
                 parsed.priority,
@@ -222,7 +237,7 @@ def main() -> None:
     if args.interpreted_only:
         binary = None
     else:
-        binary = compile_benchmark(benchmark.module, args.raw)
+        binary = compile_benchmark(benchmark.module, args.raw, args.mypy_repo)
 
     run_benchmark(
         benchmark,
