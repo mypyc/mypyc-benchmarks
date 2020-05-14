@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Dict, Tuple
 import subprocess
+from datetime import datetime
 
 
 def checkout_commit(repo_dir: str, commit: str) -> None:
@@ -38,4 +39,19 @@ def filter_commits_by_path(repo_dir: str, commits: List[str], prefix: str) -> Li
         paths = commit_changed_paths(repo_dir, commit)
         if any(path.startswith(prefix) for path in paths):
             result.append(commit)
+    return result
+
+
+def get_commit_times(repo_dir: str, commits: List[str]) -> Dict[str, Tuple[str, str]]:
+    cmd = ['git', 'show', '--numstat', '--date=unix'] + commits
+    output = subprocess.check_output(cmd, cwd=repo_dir).decode("ascii")
+    result = {}
+    for line in output.splitlines():
+        if line.startswith('commit '):
+            commit = line.split()[1]
+        if line.startswith('Date: '):
+            timestamp = int(line.split()[1])
+            dt = datetime.utcfromtimestamp(timestamp)
+            d, t = dt.isoformat().split('T')
+            result[commit] = (d, t)
     return result
