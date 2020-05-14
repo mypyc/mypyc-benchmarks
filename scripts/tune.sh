@@ -8,7 +8,7 @@
 echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
 
 # Use performance scaling governor
-for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+for f in /sys/devices/system/cpu/cpu[0123]/cpufreq/scaling_governor
 do
     echo performance | sudo tee $f
 done
