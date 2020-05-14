@@ -130,7 +130,8 @@ def main() -> None:
     if not mypy_commits:
         sys.exit("Could not find any commits")
     benchmark_commit = get_current_commit(".")
-    for mypy_commit in mypy_commits:
+    for i, mypy_commit in enumerate(mypy_commits):
+        print('-- %d/%d --' % (i + 1, len(mypy_commits)))
         now = datetime.utcnow()
         checkout_commit(mypy_repo, mypy_commit)
         sync_typeshed(mypy_repo)
