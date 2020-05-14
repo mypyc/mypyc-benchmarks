@@ -59,7 +59,7 @@ def sync_typeshed(mypy_repo: str) -> None:
 def install_mypy_deps(mypy_repo: str) -> None:
     subprocess.check_call(
         ['pip', 'install', '--quiet', '--disable-pip-version-check',
-         '-r', 'mypy-requirements.txt'], cwd=mypy_repo)
+         '-r', 'test-requirements.txt'], cwd=mypy_repo)
 
 
 def parse_args() -> Tuple[str, str, str, str, str, bool]:
