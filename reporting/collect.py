@@ -57,7 +57,9 @@ def sync_typeshed(mypy_repo: str) -> None:
 
 
 def install_mypy_deps(mypy_repo: str) -> None:
-    subprocess.check_call(
+    # This may fail on an old commit. In that case we just use
+    # whatever dependencies have already been installed.
+    subprocess.call(
         ['pip', 'install', '--quiet', '--disable-pip-version-check',
          '-r', 'test-requirements.txt'], cwd=mypy_repo)
 
