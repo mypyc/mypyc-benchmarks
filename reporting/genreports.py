@@ -7,12 +7,16 @@ import argparse
 
 from reporting.csv import read_csv, DataItem
 from reporting.common import DATA_DIR
+from reporting.gitutil import get_commit_range
 
 
 # Base directory for all reports
 REPORTS_DIR = 'reports'
 # Subdirectory for per-benchmark reports
 BENCHMARKS_DIR = 'benchmarks'
+
+
+OLDEST_COMMIT = '07ca355c547b062f252df491819dbe08693ecbb4'
 
 
 class BenchmarkData(NamedTuple):
@@ -40,6 +44,19 @@ class BenchmarkItem(NamedTuple):
     date: str
     relative_perf: float
     mypy_commit: str
+
+
+def get_commit_sort_order(mypy_repo: str) -> Dict[str, int]:
+    commits = get_commit_range(mypy_repo, OLDEST_COMMIT, 'master')
+    result = {}
+    for i, commit in enumerate(commits):
+        result[commit] = i
+    return result
+
+
+def sort_data_items(items: List[DataItem], commit_order: Dict[str, int]) -> List[DataItem]:
+    """Sort data items by age of mypy commit, from recent to old."""
+    return sorted(items, key=lambda x: commit_order[x.mypy_commit])
 
 
 def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
@@ -87,9 +104,13 @@ def parse_args() -> Tuple[str, str]:
     return args.mypy_repo, args.data_repo
 
 
-def gen_reports_for_benchmarks(data: BenchmarkData, output_dir: str) -> None:
+def gen_reports_for_benchmarks(data: BenchmarkData,
+                               output_dir: str,
+                               commit_order: Dict[str, int]) -> None:
     for benchmark in data.baselines:
-        items = gen_data_for_benchmark(data.baselines[benchmark], data.runs[benchmark])
+        runs = data.runs[benchmark]
+        runs = sort_data_items(runs, commit_order)
+        items = gen_data_for_benchmark(data.baselines[benchmark], runs)
         table = gen_benchmark_table(items)
         fnam = os.path.join(output_dir, '%s.md' % benchmark)
         lines = []
@@ -102,9 +123,10 @@ def gen_reports_for_benchmarks(data: BenchmarkData, output_dir: str) -> None:
 
 def main() -> None:
     mypy_repo, data_repo = parse_args()
+    commit_order = get_commit_sort_order(mypy_repo)
     data = load_data(mypy_repo, data_repo)
     report_dir = os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR)
-    gen_reports_for_benchmarks(data, report_dir)
+    gen_reports_for_benchmarks(data, report_dir, commit_order)
 
 
 if __name__ == '__main__':
