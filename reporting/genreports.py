@@ -42,12 +42,6 @@ def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
     return BenchmarkData(baselines, runs)
 
 
-class BenchmarkItem(NamedTuple):
-    date: str
-    relative_perf: float
-    mypy_commit: str
-
-
 def all_relevant_commits(mypy_repo: str) -> List[str]:
     return get_commit_range(mypy_repo, OLDEST_COMMIT, 'master')
 
@@ -79,19 +73,34 @@ def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
     assert False, "No baseline found for %r" % (run,)
 
 
+class BenchmarkItem(NamedTuple):
+    date: str
+    relative_perf: float
+    perf_change: str
+    mypy_commit: str
+
+
 def gen_data_for_benchmark(baselines: List[DataItem],
                            runs: List[DataItem],
                            commit_dates: Dict[str, Tuple[str, str]]) -> List[BenchmarkItem]:
     out = []
-    for item in runs:
+    prev_runtime = 0.0
+    for item in reversed(runs):
         baseline = find_baseline(baselines, item)
+        perf_change = ''
+        if prev_runtime:
+            change = max(item.runtime, prev_runtime) / min(item.runtime, prev_runtime)
+            if change > 1.03:
+                perf_change = '%+.1f%%' % ((prev_runtime / item.runtime - 1.0) * 100.0)
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
             relative_perf=baseline.runtime / item.runtime,
+            perf_change=perf_change,
             mypy_commit=item.mypy_commit,
         )
         out.append(new_item)
-    return out
+        prev_runtime = item.runtime
+    return list(reversed(out))
 
 
 def mypy_commit_link(commit: str) -> str:
@@ -99,14 +108,27 @@ def mypy_commit_link(commit: str) -> str:
     return '[%s](%s)' % (commit[:12], url)
 
 
+def bold(s: str) -> str:
+    if not s:
+        return s
+    return '**%s**' % s
+
+
 def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
     out = []
-    out.append('| Date | Performance | Mypy commit |')
-    out.append('| --- | --- | --- |')
-    for item in data:
-        out.append('| %s | %.2fx | %s |' % (
-            item.date,
-            item.relative_perf,
+    out.append('| Date | Performance | Change | Mypy commit |')
+    out.append('| --- | :---: | :---: | --- |')
+    for i, item in enumerate(data):
+        relative_perf = '%.2fx' % item.relative_perf
+        if i == 0 or item.perf_change:
+            relative_perf = bold(relative_perf)
+        date = item.date
+        if i == 0:
+            date = bold(date)
+        out.append('| %s | %s | %s | %s |' % (
+            date,
+            relative_perf,
+            bold(item.perf_change),
             mypy_commit_link(item.mypy_commit),
         ))
     return out
