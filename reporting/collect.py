@@ -10,7 +10,12 @@ import os
 import subprocess
 import sys
 
-from reporting.gitutil import get_commit_range, checkout_commit, get_current_commit
+from reporting.gitutil import (
+    get_commit_range,
+    checkout_commit,
+    get_current_commit,
+    filter_commits_by_path,
+)
 from reporting.common import get_csv_path, get_hardware_id, get_os_version, get_c_compiler_version
 
 
@@ -88,7 +93,7 @@ def install_mypy_deps(mypy_repo: str) -> None:
          '-r', 'mypy-requirements.txt'], cwd=mypy_repo)
 
 
-def parse_args() -> Tuple[str, str, str, str, str]:
+def parse_args() -> Tuple[str, str, str, str, str, bool]:
     parser = argparse.ArgumentParser(
         description="""Run a mypyc benchmark for a range of commits, and append results to a .csv
                        file at the path '<data_repo>/data/<benchmark>.csv'. Note that this
@@ -104,13 +109,24 @@ def parse_args() -> Tuple[str, str, str, str, str]:
         help="target data repository where output will be written (this will be modified!)")
     parser.add_argument("start_commit", help="commits reachable from here are skipped")
     parser.add_argument("end_commit", help="final commit to include")
+    parser.add_argument('--only-mypyc-commits', action='store_true',
+                        help='only select commits with changes in mypyc/')
     args = parser.parse_args()
-    return args.benchmark, args.mypy_repo, args.data_repo, args.start_commit, args.end_commit
+    return (
+        args.benchmark,
+        args.mypy_repo,
+        args.data_repo,
+        args.start_commit,
+        args.end_commit,
+        args.only_mypyc_commits,
+    )
 
 
 def main() -> None:
-    benchmark, mypy_repo, data_repo, start_commit, end_commit = parse_args()
+    benchmark, mypy_repo, data_repo, start_commit, end_commit, only_mypyc_commits = parse_args()
     mypy_commits = get_commit_range(mypy_repo, start_commit, end_commit)
+    if only_mypyc_commits:
+        mypy_commits = filter_commits_by_path(mypy_repo, mypy_commits, 'mypyc/')
     if not mypy_commits:
         sys.exit("Could not find any commits")
     benchmark_commit = get_current_commit(".")
