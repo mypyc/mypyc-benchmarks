@@ -7,7 +7,7 @@ import argparse
 
 from reporting.csv import read_csv, DataItem
 from reporting.common import DATA_DIR
-from reporting.gitutil import get_commit_range
+from reporting.gitutil import get_commit_range, get_commit_times
 
 
 # Base directory for all reports
@@ -31,7 +31,9 @@ def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
     runs = {}
     files = glob.glob(os.path.join(data_repo, DATA_DIR, '*.csv'))
     for fnam in files:
-        benchmark, suffix, _ = fnam.partition('-cpython')
+        benchmark = os.path.basename(fnam)
+        benchmark, _, _ = benchmark.partition('.csv')
+        benchmark, suffix, _ = benchmark.partition('-cpython')
         items = read_csv(fnam)
         if suffix:
             baselines[benchmark] = items
@@ -46,12 +48,21 @@ class BenchmarkItem(NamedTuple):
     mypy_commit: str
 
 
+def all_relevant_commits(mypy_repo: str) -> List[str]:
+    return get_commit_range(mypy_repo, OLDEST_COMMIT, 'master')
+
+
 def get_commit_sort_order(mypy_repo: str) -> Dict[str, int]:
-    commits = get_commit_range(mypy_repo, OLDEST_COMMIT, 'master')
+    commits = all_relevant_commits(mypy_repo)
     result = {}
     for i, commit in enumerate(commits):
         result[commit] = i
     return result
+
+
+def get_commit_dates(mypy_repo: str) -> Dict[str, Tuple[str, str]]:
+    commits = all_relevant_commits(mypy_repo)
+    return get_commit_times(mypy_repo, commits)
 
 
 def sort_data_items(items: List[DataItem], commit_order: Dict[str, int]) -> List[DataItem]:
@@ -69,12 +80,13 @@ def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
 
 
 def gen_data_for_benchmark(baselines: List[DataItem],
-                           runs: List[DataItem]) -> List[BenchmarkItem]:
+                           runs: List[DataItem],
+                           commit_dates: Dict[str, Tuple[str, str]]) -> List[BenchmarkItem]:
     out = []
     for item in runs:
         baseline = find_baseline(baselines, item)
         new_item = BenchmarkItem(
-            date="TODO",
+            date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
             relative_perf=baseline.runtime / item.runtime,
             mypy_commit=item.mypy_commit,
         )
@@ -82,12 +94,21 @@ def gen_data_for_benchmark(baselines: List[DataItem],
     return out
 
 
+def mypy_commit_link(commit: str) -> str:
+    url = 'https://github.com/python/mypy/commit/%s' % commit
+    return '[%s](%s)' % (commit[:12], url)
+
+
 def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
     out = []
     out.append('| Date | Performance | Mypy commit |')
-    out.append('| -- | -- | -- |')
+    out.append('| --- | --- | --- |')
     for item in data:
-        out.append('| %s | %.2fx | %s |' % (item.date, item.relative_perf, item.mypy_commit))
+        out.append('| %s | %.2fx | %s |' % (
+            item.date,
+            item.relative_perf,
+            mypy_commit_link(item.mypy_commit),
+        ))
     return out
 
 
@@ -106,17 +127,20 @@ def parse_args() -> Tuple[str, str]:
 
 def gen_reports_for_benchmarks(data: BenchmarkData,
                                output_dir: str,
-                               commit_order: Dict[str, int]) -> None:
+                               commit_order: Dict[str, int],
+                               commit_dates: Dict[str, Tuple[str, str]]) -> None:
     for benchmark in data.baselines:
         runs = data.runs[benchmark]
         runs = sort_data_items(runs, commit_order)
-        items = gen_data_for_benchmark(data.baselines[benchmark], runs)
+        items = gen_data_for_benchmark(data.baselines[benchmark], runs, commit_dates)
         table = gen_benchmark_table(items)
         fnam = os.path.join(output_dir, '%s.md' % benchmark)
         lines = []
         lines.append('# Benchmark results for "%s"' % benchmark)
         lines.append('')
         lines.extend(table)
+        os.makedirs(output_dir, exist_ok=True)
+        print('writing %s' % fnam)
         with open(fnam, 'w') as f:
             f.write('\n'.join(lines))
 
@@ -124,9 +148,10 @@ def gen_reports_for_benchmarks(data: BenchmarkData,
 def main() -> None:
     mypy_repo, data_repo = parse_args()
     commit_order = get_commit_sort_order(mypy_repo)
+    commit_times = get_commit_dates(mypy_repo)
     data = load_data(mypy_repo, data_repo)
     report_dir = os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR)
-    gen_reports_for_benchmarks(data, report_dir, commit_order)
+    gen_reports_for_benchmarks(data, report_dir, commit_order, commit_times)
 
 
 if __name__ == '__main__':
