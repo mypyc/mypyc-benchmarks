@@ -6,9 +6,11 @@ import subprocess
 # Use clang as the C compiler since it tends to generate faster code than gcc.
 CC = "clang"
 
+DATA_DIR = "data"
+
 
 def get_csv_path(data_repo: str, benchmark: str, cpython: bool = False) -> str:
-    data_dir = os.path.join(data_repo, 'data')
+    data_dir = os.path.join(data_repo, DATA_DIR)
     if not os.path.exists(data_dir):
         os.makedirs(data_dir)
     if cpython:
