@@ -48,9 +48,9 @@ class DataItem(NamedTuple):
 
 
 def read_csv(fnam: str) -> List[DataItem]:
-    benchmark = fnam.split('.')[0]
-    benchmark = os.path.basename(benchmark)
-    benchmark, _, _ = benchmark.partition('-cpython')
+    benchmark = os.path.basename(fnam)
+    benchmark = benchmark.partition('.csv')[0]
+    benchmark = benchmark.partition('-cpython')[0]
     with open(fnam) as f:
         lines = f.readlines()
     lines = lines[1:]
