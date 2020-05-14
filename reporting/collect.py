@@ -16,44 +16,13 @@ from reporting.gitutil import (
     get_current_commit,
     filter_commits_by_path,
 )
-from reporting.common import get_csv_path, get_hardware_id, get_os_version, get_c_compiler_version
+from reporting.csv import write_csv_line
+from reporting.common import get_csv_path, CC
 
-
-# Use clang since it tends to generate faster code.
-CC = "clang"
 
 # Minimum number of iterations for an interpreted benchmark (this needs to be high,
 # since interpreted measurements are noisier than compiled)
 MIN_INTERPRETED_ITER = 200
-
-
-def write_csv_header(fnam: str) -> None:
-    with open(fnam, "w") as f:
-        f.write("Timestamp,Runtime (s),Runtime (stddev),Mypy commit," +
-                "Benchmark commit,Python version,Hardware,OS,C compiler\n")
-
-
-def write_csv_line(fnam: str,
-                   benchmark: str,
-                   timestamp: datetime,
-                   runtime: float,
-                   stddev: float,
-                   mypy_commit: str,
-                   benchmark_commit: str) -> None:
-    if not os.path.exists(fnam):
-        write_csv_header(fnam)
-    with open(fnam, "a") as f:
-        f.write("%s,%.6f,%.6f,%s,%s,%s,%s,%s,%s\n" % (
-            timestamp,
-            runtime,
-            stddev,
-            mypy_commit,
-            benchmark_commit,
-            sys.version.split()[0],
-            get_hardware_id(),
-            get_os_version(),
-            '%s %s' % (CC, get_c_compiler_version(CC)),
-        ))
 
 
 def run_bench(benchmark: str,

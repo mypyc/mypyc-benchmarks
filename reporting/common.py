@@ -3,6 +3,10 @@ import re
 import subprocess
 
 
+# Use clang as the C compiler since it tends to generate faster code than gcc.
+CC = "clang"
+
+
 def get_csv_path(data_repo: str, benchmark: str, cpython: bool = False) -> str:
     data_dir = os.path.join(data_repo, 'data')
     if not os.path.exists(data_dir):
