@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple, NamedTuple
 import os
 
 from reporting.data import DataItem, find_baseline, BenchmarkData
+from reporting.markdown import benchmark_link
 
 
 class SummaryItem(NamedTuple):
@@ -28,11 +29,14 @@ def gen_summary_data(benchmarks: List[str],
 
 def gen_summary_table(data: List[SummaryItem]) -> List[str]:
     lines = []
-    lines.append('| Benchmark | Mypyc vs. interpreted |')
-    lines.append('| --- | | ---: |')
+    lines.append('| Benchmark | Current perf |')
+    lines.append('| --- | :---: |')
     for i, item in enumerate(data):
         relative_perf = '%.2fx' % item.relative_perf
-        lines.append('| %s | %s |' % (item.benchmark, relative_perf))
+        lines.append('| %s | %s |' % (
+            benchmark_link(item.benchmark),
+            relative_perf,
+        ))
     return lines
 
 
@@ -43,7 +47,9 @@ def gen_summary_reports(data: BenchmarkData,
     items = gen_summary_data(benchmarks, data.baselines, data.runs, commit_order)
     table = gen_summary_table(items)
     lines = []
-    lines.append('# Benchmark summary')
+    lines.append('# Mypyc benchmark summary')
+    lines.append('')
+    lines.append('Performance is relative to interpreted CPython.')
     lines.append('')
     lines.extend(table)
     os.makedirs(output_dir, exist_ok=True)

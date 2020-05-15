@@ -13,12 +13,7 @@ from reporting.data import (
 )
 from reporting.report_runs import gen_reports_for_benchmarks
 from reporting.report_summary import gen_summary_reports
-
-
-# Base directory for all reports
-REPORTS_DIR = 'reports'
-# Subdirectory for per-benchmark reports
-BENCHMARKS_DIR = 'benchmarks'
+from reporting.common import REPORTS_DIR, BENCHMARKS_DIR
 
 
 def parse_args() -> Tuple[str, str]:
