@@ -1,9 +1,10 @@
-"""Report containing all runs of a single benchmark."""
+"""Generate reports, each containing data about the runs of a single benchmark."""
 
 from typing import Dict, List, NamedTuple, Tuple
+import os
 
 from reporting.markdown import bold, mypy_commit_link
-from reporting.data import DataItem, find_baseline
+from reporting.data import DataItem, find_baseline, BenchmarkData, sort_data_items
 
 
 class BenchmarkItem(NamedTuple):
@@ -17,7 +18,7 @@ def gen_data_for_benchmark(baselines: List[DataItem],
                            runs: List[DataItem],
                            commit_dates: Dict[str, Tuple[str, str]]) -> List[BenchmarkItem]:
     """Generate data for each run of a single benchmark."""
-    out = []
+    result = []
     prev_runtime = 0.0
     for item in reversed(runs):
         baseline = find_baseline(baselines, item)
@@ -32,16 +33,16 @@ def gen_data_for_benchmark(baselines: List[DataItem],
             perf_change=perf_change,
             mypy_commit=item.mypy_commit,
         )
-        out.append(new_item)
+        result.append(new_item)
         prev_runtime = item.runtime
-    return list(reversed(out))
+    return list(reversed(result))
 
 
 def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
     """Generate markdown table for the runs of a single benchmark."""
-    out = []
-    out.append('| Date | Performance | Change | Mypy commit |')
-    out.append('| --- | :---: | :---: | --- |')
+    lines = []
+    lines.append('| Date | Performance | Change | Mypy commit |')
+    lines.append('| --- | :---: | :---: | --- |')
     for i, item in enumerate(data):
         relative_perf = '%.2fx' % item.relative_perf
         if i == 0 or item.perf_change:
@@ -49,10 +50,31 @@ def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
         date = item.date
         if i == 0:
             date = bold(date)
-        out.append('| %s | %s | %s | %s |' % (
+        lines.append('| %s | %s | %s | %s |' % (
             date,
             relative_perf,
             bold(item.perf_change),
             mypy_commit_link(item.mypy_commit),
         ))
-    return out
+    return lines
+
+
+def gen_reports_for_benchmarks(data: BenchmarkData,
+                               output_dir: str,
+                               commit_order: Dict[str, int],
+                               commit_dates: Dict[str, Tuple[str, str]]) -> None:
+    """Generate separate reports for each benchmark about their runs."""
+    for benchmark in data.baselines:
+        runs = data.runs[benchmark]
+        runs = sort_data_items(runs, commit_order)
+        items = gen_data_for_benchmark(data.baselines[benchmark], runs, commit_dates)
+        table = gen_benchmark_table(items)
+        fnam = os.path.join(output_dir, '%s.md' % benchmark)
+        lines = []
+        lines.append('# Benchmark results for "%s"' % benchmark)
+        lines.append('')
+        lines.extend(table)
+        os.makedirs(output_dir, exist_ok=True)
+        print('writing %s' % fnam)
+        with open(fnam, 'w') as f:
+            f.write('\n'.join(lines))
