@@ -35,7 +35,10 @@ def get_hardware_id() -> str:
         if 'i7-2600K' in data:
             # Special case for the current server hardware configuration.
             return 'Intel Core i7-2600K (64-bit)'
-    # Give up if it's not the known configuration.
+        if 'Ryzen 9 3950X' in data:
+            # Another special casing.
+            return 'AMD Ryzen 9 3950X (64-bit)'
+    # Give up if it's not a known configuration.
     return 'UNKNOWN'
 
 

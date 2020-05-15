@@ -1,4 +1,8 @@
-"""Generate benchmark reports."""
+"""Generate mypyc benchmark reports in markdown.
+
+We generate one detailed report per benchmark, and also summary
+reports that include information about multiple benchmarks.
+"""
 
 from typing import Tuple, Dict, NamedTuple, List
 import glob
@@ -31,13 +35,30 @@ def parse_args() -> Tuple[str, str]:
 
 def main() -> None:
     mypy_repo, data_repo = parse_args()
+
+    # Prepare input data.
     commit_order = get_mypy_commit_sort_order(mypy_repo)
     commit_times = get_mypy_commit_dates(mypy_repo)
     data = load_data(mypy_repo, data_repo)
+
+    recent_item = sort_data_items(data.runs['richards'], commit_order)[0]
+    python_version = recent_item.python_version
+    os_version = recent_item.os_version
+    hardware_id = recent_item.hardware_id
+    environment_summary = "Environment: CPython %s, %s and %s." % (
+        python_version,
+        os_version,
+        hardware_id,
+    )
+
+    # Generate reports about individual benchmarks.
     per_benchmark_report_dir = os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR)
     gen_reports_for_benchmarks(data, per_benchmark_report_dir, commit_order, commit_times)
+
+    # Generate benchmark summary reports.
     summary_report_dir = os.path.join(data_repo, REPORTS_DIR)
-    gen_summary_reports(data, summary_report_dir, commit_order, commit_times)
+    gen_summary_reports(data, summary_report_dir, commit_order, commit_times,
+                        environment_summary)
 
 
 if __name__ == '__main__':
