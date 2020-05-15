@@ -12,6 +12,7 @@ from reporting.data import (
     sort_data_items,
 )
 from reporting.report_runs import gen_reports_for_benchmarks
+from reporting.report_summary import gen_summary_reports
 
 
 # Base directory for all reports
@@ -40,6 +41,8 @@ def main() -> None:
     data = load_data(mypy_repo, data_repo)
     per_benchmark_report_dir = os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR)
     gen_reports_for_benchmarks(data, per_benchmark_report_dir, commit_order, commit_times)
+    summary_report_dir = os.path.join(data_repo, REPORTS_DIR)
+    gen_summary_reports(data, summary_report_dir, commit_order)
 
 
 if __name__ == '__main__':
