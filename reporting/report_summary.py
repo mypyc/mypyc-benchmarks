@@ -66,6 +66,7 @@ def gen_summary_table(data: List[SummaryItem]) -> List[str]:
 
 def gen_summary_report(benchmarks: List[str],
                        title: str,
+                       note: str,
                        fnam: str,
                        data: BenchmarkData,
                        commit_order: Dict[str, int],
@@ -75,6 +76,9 @@ def gen_summary_report(benchmarks: List[str],
     lines = []
     lines.append('# %s' % title) # Mypyc benchmark summary')
     lines.append('')
+    if note:
+        lines.append(note)
+        lines.append('')
     lines.append('Performance is relative to interpreted CPython.')
     lines.append('')
     lines.extend(table)
@@ -94,6 +98,7 @@ def gen_summary_reports(data: BenchmarkData,
     gen_summary_report(
         list(benchmarks - data.microbenchmarks),
         'Mypyc benchmark summary',
+        '',
         fnam,
         data,
         commit_order,
@@ -104,6 +109,9 @@ def gen_summary_reports(data: BenchmarkData,
     gen_summary_report(
         list(benchmarks & data.microbenchmarks),
         'Mypyc benchmark summary (microbenchmarks)',
+        """**Note:** Microbenchmarks don't reflect real-world performance and can be noisy.
+           They are mostly used for identifying bottlenecks, and detecting major performance "
+           improvements or regressions.""",
         fnam,
         data,
         commit_order,
