@@ -37,7 +37,7 @@ def main() -> None:
     per_benchmark_report_dir = os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR)
     gen_reports_for_benchmarks(data, per_benchmark_report_dir, commit_order, commit_times)
     summary_report_dir = os.path.join(data_repo, REPORTS_DIR)
-    gen_summary_reports(data, summary_report_dir, commit_order)
+    gen_summary_reports(data, summary_report_dir, commit_order, commit_times)
 
 
 if __name__ == '__main__':

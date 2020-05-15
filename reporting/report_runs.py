@@ -4,7 +4,9 @@ from typing import Dict, List, NamedTuple, Tuple
 import os
 
 from reporting.markdown import bold, mypy_commit_link
-from reporting.data import DataItem, find_baseline, BenchmarkData, sort_data_items
+from reporting.data import (
+    DataItem, find_baseline, BenchmarkData, sort_data_items, is_significant_percent_change
+)
 
 
 class BenchmarkItem(NamedTuple):
@@ -24,9 +26,9 @@ def gen_data_for_benchmark(baselines: List[DataItem],
         baseline = find_baseline(baselines, item)
         perf_change = ''
         if prev_runtime:
-            change = max(item.runtime, prev_runtime) / min(item.runtime, prev_runtime)
-            if change > 1.03:
-                perf_change = '%+.1f%%' % ((prev_runtime / item.runtime - 1.0) * 100.0)
+            change = 100.0 * (prev_runtime / item.runtime - 1.0)
+            if is_significant_percent_change(item.benchmark, change):
+                perf_change = '%+.1f%%' % change
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
             relative_perf=baseline.runtime / item.runtime,

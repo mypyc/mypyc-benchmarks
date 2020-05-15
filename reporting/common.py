@@ -1,3 +1,5 @@
+from typing import Tuple
+from datetime import datetime
 import os
 import re
 import subprocess
@@ -49,3 +51,8 @@ def get_c_compiler_version(cc: str) -> str:
     m = re.search(r'\b[0-9]+([-.][A-Za-z0-9]+)*\b', output)
     assert m is not None
     return m.group()
+
+
+def split_datetime(dt: datetime) -> Tuple[str, str]:
+    date, time = dt.isoformat().split('T')
+    return date, time

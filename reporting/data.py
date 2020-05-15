@@ -110,3 +110,7 @@ def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
                 and item.os_version == run.os_version):
             return item
     assert False, "No baseline found for %r" % (run,)
+
+
+def is_significant_percent_change(benchmark: str, delta_percentage: float) -> bool:
+    return abs(delta_percentage) >= 3.0

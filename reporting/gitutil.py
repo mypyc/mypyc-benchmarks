@@ -2,6 +2,8 @@ from typing import List, Dict, Tuple
 import subprocess
 from datetime import datetime
 
+from reporting.common import split_datetime
+
 
 # Generic utils
 
@@ -55,8 +57,7 @@ def get_commit_times(repo_dir: str, commits: List[str]) -> Dict[str, Tuple[str, 
         if line.startswith('Date: '):
             timestamp = int(line.split()[1])
             dt = datetime.utcfromtimestamp(timestamp)
-            d, t = dt.isoformat().split('T')
-            result[commit] = (d, t)
+            result[commit] = split_datetime(dt)
     return result
 
 
