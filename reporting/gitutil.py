@@ -3,6 +3,9 @@ import subprocess
 from datetime import datetime
 
 
+# Generic utils
+
+
 def checkout_commit(repo_dir: str, commit: str) -> None:
     subprocess.check_call(['git', 'checkout', commit], cwd=repo_dir)
 
@@ -55,3 +58,30 @@ def get_commit_times(repo_dir: str, commits: List[str]) -> Dict[str, Tuple[str, 
             d, t = dt.isoformat().split('T')
             result[commit] = (d, t)
     return result
+
+
+# Mypy/mypyc specific utils
+
+
+OLDEST_MYPY_COMMIT = '07ca355c547b062f252df491819dbe08693ecbb4'
+
+
+def get_all_relevant_mypy_commits(mypy_repo: str) -> List[str]:
+    """Return a list of mypy commit hashes which might have benchmark runs.
+
+    Very old commits are omitted.
+    """
+    return get_commit_range(mypy_repo, OLDEST_MYPY_COMMIT, 'master')
+
+
+def get_mypy_commit_sort_order(mypy_repo: str) -> Dict[str, int]:
+    commits = get_all_relevant_mypy_commits(mypy_repo)
+    result = {}
+    for i, commit in enumerate(commits):
+        result[commit] = i
+    return result
+
+
+def get_mypy_commit_dates(mypy_repo: str) -> Dict[str, Tuple[str, str]]:
+    commits = get_all_relevant_mypy_commits(mypy_repo)
+    return get_commit_times(mypy_repo, commits)

@@ -16,7 +16,7 @@ from reporting.gitutil import (
     get_current_commit,
     filter_commits_by_path,
 )
-from reporting.csv import write_csv_line
+from reporting.data import write_csv_line
 from reporting.common import get_csv_path, CC
 
 

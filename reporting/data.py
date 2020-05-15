@@ -1,9 +1,10 @@
-from typing import NamedTuple, List
+from typing import NamedTuple, List, Dict
 from datetime import datetime
 import os
 import sys
+import glob
 
-from reporting.common import get_hardware_id, get_os_version, get_c_compiler_version, CC
+from reporting.common import get_hardware_id, get_os_version, get_c_compiler_version, CC, DATA_DIR
 
 
 def write_csv_header(fnam: str) -> None:
@@ -70,3 +71,42 @@ def read_csv(fnam: str) -> List[DataItem]:
         )
         result.append(item)
     return result
+
+
+class BenchmarkData(NamedTuple):
+    # Data about interpreted baseline runs (benchmark name as key)
+    baselines: Dict[str, List[DataItem]]
+    # Data about each compiled benchmark run (benchmark name as key)
+    runs: Dict[str, List[DataItem]]
+
+
+def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
+    """Load all benchmark data from csv files."""
+    baselines = {}
+    runs = {}
+    files = glob.glob(os.path.join(data_repo, DATA_DIR, '*.csv'))
+    for fnam in files:
+        benchmark = os.path.basename(fnam)
+        benchmark, _, _ = benchmark.partition('.csv')
+        benchmark, suffix, _ = benchmark.partition('-cpython')
+        items = read_csv(fnam)
+        if suffix:
+            baselines[benchmark] = items
+        else:
+            runs[benchmark] = items
+    return BenchmarkData(baselines, runs)
+
+
+def sort_data_items(items: List[DataItem], commit_order: Dict[str, int]) -> List[DataItem]:
+    """Sort data items by age of mypy commit, from recent to old."""
+    return sorted(items, key=lambda x: commit_order[x.mypy_commit])
+
+
+def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
+    """Find the corresponding baseline measurement for a benchmark run."""
+    for item in baselines:
+        if (item.python_version == run.python_version
+                and item.hardware_id == run.hardware_id
+                and item.os_version == run.os_version):
+            return item
+    assert False, "No baseline found for %r" % (run,)
