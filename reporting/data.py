@@ -1,8 +1,9 @@
-from typing import NamedTuple, List, Dict
+from typing import NamedTuple, List, Dict, Set
 from datetime import datetime
 import os
 import sys
 import glob
+import subprocess
 
 from reporting.common import get_hardware_id, get_os_version, get_c_compiler_version, CC, DATA_DIR
 
@@ -78,6 +79,8 @@ class BenchmarkData(NamedTuple):
     baselines: Dict[str, List[DataItem]]
     # Data about each compiled benchmark run (benchmark name as key)
     runs: Dict[str, List[DataItem]]
+    # These benchmarks are microbenchmarks
+    microbenchmarks: Set[str]
 
 
 def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
@@ -94,7 +97,17 @@ def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
             baselines[benchmark] = items
         else:
             runs[benchmark] = items
-    return BenchmarkData(baselines, runs)
+    microbenchmarks = get_microbenchmark_names()
+    return BenchmarkData(baselines, runs, microbenchmarks)
+
+
+def get_microbenchmark_names() -> Set[str]:
+    result = set()
+    data = subprocess.check_output(['python', 'runbench.py', '--list']).decode('ascii')
+    for line in data.splitlines():
+        if '(micro)' in line:
+            result.add(line.split()[0])
+    return result
 
 
 def sort_data_items(items: List[DataItem], commit_order: Dict[str, int]) -> List[DataItem]:

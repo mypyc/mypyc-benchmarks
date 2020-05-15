@@ -64,21 +64,48 @@ def gen_summary_table(data: List[SummaryItem]) -> List[str]:
     return lines
 
 
-def gen_summary_reports(data: BenchmarkData,
-                        output_dir: str,
-                        commit_order: Dict[str, int],
-                        commit_times: Dict[str, Tuple[str, str]]) -> None:
-    benchmarks = sorted(data.runs)
+def gen_summary_report(benchmarks: List[str],
+                       title: str,
+                       fnam: str,
+                       data: BenchmarkData,
+                       commit_order: Dict[str, int],
+                       commit_times: Dict[str, Tuple[str, str]]) -> None:
     items = gen_summary_data(benchmarks, data.baselines, data.runs, commit_order, commit_times)
     table = gen_summary_table(items)
     lines = []
-    lines.append('# Mypyc benchmark summary')
+    lines.append('# %s' % title) # Mypyc benchmark summary')
     lines.append('')
     lines.append('Performance is relative to interpreted CPython.')
     lines.append('')
     lines.extend(table)
-    os.makedirs(output_dir, exist_ok=True)
-    fnam = os.path.join(output_dir, 'summary.md')
     print('writing %s' % fnam)
     with open(fnam, 'w') as f:
         f.write('\n'.join(lines) + '\n')
+
+
+def gen_summary_reports(data: BenchmarkData,
+                        output_dir: str,
+                        commit_order: Dict[str, int],
+                        commit_times: Dict[str, Tuple[str, str]]) -> None:
+    benchmarks = set(data.runs)
+    os.makedirs(output_dir, exist_ok=True)
+
+    fnam = os.path.join(output_dir, 'summary-main.md')
+    gen_summary_report(
+        list(benchmarks - data.microbenchmarks),
+        'Mypyc benchmark summary',
+        fnam,
+        data,
+        commit_order,
+        commit_times,
+    )
+
+    fnam = os.path.join(output_dir, 'summary-microbenchmarks.md')
+    gen_summary_report(
+        list(benchmarks & data.microbenchmarks),
+        'Mypyc benchmark summary (microbenchmarks)',
+        fnam,
+        data,
+        commit_order,
+        commit_times,
+    )
