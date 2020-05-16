@@ -25,6 +25,14 @@ from reporting.common import get_csv_path, CC
 MIN_INTERPRETED_ITER = 200
 
 
+def min_interpreted_iterations(benchmark: str) -> int:
+    if benchmark == 'binary_trees':
+        # This one is slow so run fewer iterations.
+        return 20
+    else:
+        return MIN_INTERPRETED_ITER
+
+
 def run_bench(benchmark: str,
               mypy_repo: Optional[str],
               compiled: bool = True) -> Tuple[float, float]:
@@ -41,7 +49,8 @@ def run_bench(benchmark: str,
     if compiled:
         cmd.append('-c')
     else:
-        cmd.extend(['-i', '--min-iter', str(MIN_INTERPRETED_ITER)])
+        min_iter = min_interpreted_iterations(benchmark)
+        cmd.extend(['-i', '--min-iter', str(min_iter)])
     cmd.append(benchmark)
     output = subprocess.check_output(cmd, env=env).decode("ascii")
     last_line = output.rstrip().splitlines()[-1]
