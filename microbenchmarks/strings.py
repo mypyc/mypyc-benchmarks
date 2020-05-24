@@ -3,7 +3,7 @@ from benchmarking import benchmark
 
 @benchmark
 def str_methods() -> None:
-    """Use a mix of str methods (but not split/join)."""
+    """Use a mix of popular str methods (but not split/join)."""
     a = []
     for i in range(1000):
         a.append('Foobar-%d' % i)
@@ -25,6 +25,38 @@ def str_methods() -> None:
             if s.lower() == s:
                 n += 1
     assert n == 400000, n
+
+
+@benchmark
+def str_methods_2() -> None:
+    """Use a mix of popular str methods."""
+    a = []
+    for i in range(1000):
+        a.append('FOOBAR-%d' % i)
+        a.append('  %d str' % i)
+
+    n = 0
+    for i in range(100):
+        for s in a:
+            if s.startswith(('  1', '  2', '  3')):
+                n += 1
+            if s.endswith(('4', '5', '6')):
+                n += 1
+            if s.lstrip() != s:
+                n += 1
+            if s.lstrip(' ') != s:
+                n += 1
+            if s.rstrip('123') != s:
+                n += 1
+            if s.upper() == s:
+                n += 1
+            x, y, z = s.partition('-')
+            if y:
+                n += 1
+            x, y, z = s.rpartition('-')
+            if y:
+                n += 1
+    assert n == 593300, n
 
 
 @benchmark
