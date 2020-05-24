@@ -304,3 +304,19 @@ def multiple_assignment() -> None:
         xx, yy = a
         n += x + xx
     assert n == 3000000, n
+
+
+@benchmark
+def list_for_reversed() -> None:
+    a = []
+    for i in range(1000):
+        a.append([i * 2])
+        a.append([i, i + 2])
+        a.append([i] * 12)
+        a.append([])
+    n = 0
+    for i in range(100):
+        for aa in a:
+            for s in reversed(aa):
+                n += s
+    assert n == 799400000, n
