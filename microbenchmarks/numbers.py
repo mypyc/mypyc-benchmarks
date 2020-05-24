@@ -50,3 +50,44 @@ def multiply(a: Matrix, b: Matrix) -> Matrix:
                 x += a[i][k] * b[k][j]
             result[-1][j] = x
     return result
+
+
+@benchmark
+def int_to_float():
+    a = [1, 4, 6, 7, 8, 9]
+    x = 0.0
+    for i in range(1000 * 1000):
+        for n in a:
+            x += float(n)
+    assert x == 35000000.0, x
+
+
+@benchmark
+def str_to_float():
+    a = ['1', '1.234567', '44324', '23.4', '-43.44e-4']
+    x = 0.0
+    for i in range(1000 * 1000):
+        for n in a:
+            x += float(n)
+    assert is_close(x, 44349630223.26009), x
+
+
+@benchmark
+def float_abs():
+    a = [1, -1.234567, 44324, 23.4, -43.44e-4]
+    x = 0.0
+    for i in range(1000 * 1000):
+        for n in a:
+            x += abs(n)
+    assert is_close(x, 44349638911.052574), x
+
+
+@benchmark
+def int_divmod():
+    a = [1, 1235, 5434, 394879374, -34453]
+    n = 0
+    for i in range(1000 * 1000):
+        for x in a:
+            q, r = divmod(x, 23)
+            n += q + r
+    assert n == 17167493000000, n
