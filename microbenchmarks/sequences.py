@@ -231,3 +231,76 @@ def list_add_in_place() -> None:
             a += [j]
         assert len(a) == l
         assert id(a) == n
+
+
+@benchmark
+def list_concatenate() -> None:
+    flag = False
+    x = ["x", "y", "z"]
+    y = ["1, 2"]
+    n = 0
+    for i in range(1000 * 1000):
+        a = x
+        if flag:
+            b = a + a
+        else:
+            b = y + a + y
+        n += len(a + b)
+        flag = not flag
+    assert n == 8500000, n
+
+
+@benchmark
+def list_equality() -> None:
+    a = [1, 2]
+    n = 0
+    for i in range(10000):
+        for j in range(100):
+            if a == [1, j]:
+                n += 1
+            if a == [i, 2]:
+                n += 1
+    assert n == 10100, n
+
+
+@benchmark
+def tuple_equality() -> None:
+    t = (1, 2)
+    n = 0
+    for i in range(10000):
+        a = []
+        a.append((i, 5))
+        for j in range(100):
+            if t == (1, j):
+                n += 1
+            if t == (i, 2):
+                n += 1
+            if a[0] == (j, 5):
+                a.append((j, 6))
+                n += 1
+    assert n == 10200, n
+
+
+@benchmark
+def list_comprehension() -> None:
+    a = [1, 2, 4, 6, 8, 13, 17]
+    n = 0
+    for i in range(100000):
+        for j in range(20):
+            b = [x for x in a if x < j]
+            n += len(b)
+    assert n == 8200000, n
+
+
+@benchmark
+def multiple_assignment() -> None:
+    x = 0
+    y = 1
+    a = [2, 3]
+    n = 0
+    for i in range(1000000):
+        x, y = y, x
+        a[0], a[1] = a[1], a[0]
+        xx, yy = a
+        n += x + xx
+    assert n == 3000000, n
