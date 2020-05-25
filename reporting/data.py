@@ -1,11 +1,14 @@
-from typing import NamedTuple, List, Dict, Set
+from typing import NamedTuple, List, Dict, Set, Tuple
 from datetime import datetime
 import os
+import re
 import sys
 import glob
 import subprocess
 
-from reporting.common import get_hardware_id, get_os_version, get_c_compiler_version, CC, DATA_DIR
+from reporting.common import (
+    get_hardware_id, get_os_version, get_c_compiler_version, CC, DATA_DIR, SOURCE_DIRS
+)
 
 
 def write_csv_header(fnam: str) -> None:
@@ -81,6 +84,8 @@ class BenchmarkData(NamedTuple):
     runs: Dict[str, List[DataItem]]
     # These benchmarks are microbenchmarks
     microbenchmarks: Set[str]
+    # Dict from benchmark name to (source .py file path, line number)
+    source_locations: Dict[str, Tuple[str, int]]
 
 
 def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
@@ -98,7 +103,8 @@ def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
         else:
             runs[benchmark] = items
     microbenchmarks = get_microbenchmark_names()
-    return BenchmarkData(baselines, runs, microbenchmarks)
+    source_locations = get_source_locations()
+    return BenchmarkData(baselines, runs, microbenchmarks, source_locations)
 
 
 def get_microbenchmark_names() -> Set[str]:
@@ -107,6 +113,22 @@ def get_microbenchmark_names() -> Set[str]:
     for line in data.splitlines():
         if '(micro)' in line:
             result.add(line.split()[0])
+    return result
+
+
+def get_source_locations() -> Dict[str, Tuple[str, int]]:
+    result = {}
+    for src_dir in SOURCE_DIRS:
+        for fnam in glob.glob('%s/*.py' % src_dir):
+            with open(fnam) as f:
+                lines = f.readlines()
+            for i, line in enumerate(lines):
+                if line.strip().startswith('@benchmark'):
+                    for j, line2 in enumerate(lines[i + 1 : i + 10]):
+                        line2 = line2.strip()
+                        m = re.match('def +([a-zA-Z_0-9]+)', line2)
+                        if m:
+                            result[m.group(1)] = (fnam, i + 2 + j)
     return result
 
 

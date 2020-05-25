@@ -16,6 +16,9 @@ REPORTS_DIR = 'reports'
 # Subdirectory for per-benchmark reports (under REPORTS_DIR)
 BENCHMARKS_DIR = 'benchmarks'
 
+# Directories containing benchmark .py files
+SOURCE_DIRS = ('benchmarks', 'microbenchmarks')
+
 
 def get_csv_path(data_repo: str, benchmark: str, cpython: bool = False) -> str:
     data_dir = os.path.join(data_repo, DATA_DIR)

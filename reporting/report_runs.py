@@ -83,6 +83,13 @@ def gen_reports_for_benchmarks(data: BenchmarkData,
         lines = []
         lines.append('# Benchmark results for "%s"' % benchmark)
         lines.append('')
+        if benchmark in data.source_locations:
+            path, line = data.source_locations[benchmark]
+            url = 'https://github.com/mypyc/mypyc-benchmarks/blob/master/%s#L%d' % (
+                path, line
+            )
+            lines.append('[Benchmark implementation](%s)' % url)
+            lines.append('')
         if is_microbenchmark:
             threshold = significant_percent_change(benchmark, is_microbenchmark)
             lines.append("**Note:** This is a microbenchmark. Results can be noisy.")
