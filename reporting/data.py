@@ -125,5 +125,14 @@ def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
     assert False, "No baseline found for %r" % (run,)
 
 
-def is_significant_percent_change(benchmark: str, delta_percentage: float) -> bool:
-    return abs(delta_percentage) >= 3.0
+def is_significant_percent_change(benchmark: str,
+                                  delta_percentage: float,
+                                  is_microbenchmark: bool) -> bool:
+    delta_percentage = abs(delta_percentage)
+    if is_microbenchmark:
+        # Microbenchmark measurements are noisy. By default, only
+        # consider 20% change as significant.
+        return delta_percentage >= 20.0
+    else:
+        # Other benchmarks are less noisy.
+        return delta_percentage >= 3

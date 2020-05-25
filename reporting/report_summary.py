@@ -1,6 +1,6 @@
 """Generate report containing summary of multiple benchmarks."""
 
-from typing import Dict, List, Tuple, NamedTuple
+from typing import Dict, List, Tuple, NamedTuple, Set
 from datetime import datetime, timedelta
 import os
 
@@ -19,7 +19,8 @@ def gen_summary_data(benchmarks: List[str],
                      baselines: Dict[str, List[DataItem]],
                      runs: Dict[str, List[DataItem]],
                      commit_order: Dict[str, int],
-                     commit_times: Dict[str, Tuple[str, str]]) -> List[SummaryItem]:
+                     commit_times: Dict[str, Tuple[str, str]],
+                     microbenchmarks: Set[str]) -> List[SummaryItem]:
     result = []
     for benchmark in benchmarks:
         newest_item = min(runs[benchmark], key=lambda x: commit_order[x.mypy_commit])
@@ -28,7 +29,7 @@ def gen_summary_data(benchmarks: List[str],
         old_item = find_item_at_time(runs[benchmark], three_months_ago, commit_times)
         percentage_3m = 100.0 * (old_item.runtime / newest_item.runtime - 1.0)
         delta_3m = ''
-        if is_significant_percent_change(benchmark, percentage_3m):
+        if is_significant_percent_change(benchmark, percentage_3m, benchmark in microbenchmarks):
             delta_3m = '%+.1f%%' % percentage_3m
         summary_item = SummaryItem(
             benchmark=benchmark,
@@ -71,8 +72,16 @@ def gen_summary_report(benchmarks: List[str],
                        fnam: str,
                        data: BenchmarkData,
                        commit_order: Dict[str, int],
-                       commit_times: Dict[str, Tuple[str, str]]) -> None:
-    items = gen_summary_data(benchmarks, data.baselines, data.runs, commit_order, commit_times)
+                       commit_times: Dict[str, Tuple[str, str]],
+                       microbenchmarks: Set[str]) -> None:
+    items = gen_summary_data(
+        benchmarks,
+        data.baselines,
+        data.runs,
+        commit_order,
+        commit_times,
+        microbenchmarks,
+    )
     table = gen_summary_table(items)
     lines = []
     lines.append('# %s' % title) # Mypyc benchmark summary')
@@ -108,6 +117,7 @@ def gen_summary_reports(data: BenchmarkData,
         data,
         commit_order,
         commit_times,
+        data.microbenchmarks,
     )
 
     fnam = os.path.join(output_dir, 'summary-microbenchmarks.md')
@@ -122,4 +132,5 @@ def gen_summary_reports(data: BenchmarkData,
         data,
         commit_order,
         commit_times,
+        data.microbenchmarks,
     )

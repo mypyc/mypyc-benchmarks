@@ -18,7 +18,8 @@ class BenchmarkItem(NamedTuple):
 
 def gen_data_for_benchmark(baselines: List[DataItem],
                            runs: List[DataItem],
-                           commit_dates: Dict[str, Tuple[str, str]]) -> List[BenchmarkItem]:
+                           commit_dates: Dict[str, Tuple[str, str]],
+                           is_microbenchmark: bool) -> List[BenchmarkItem]:
     """Generate data for each run of a single benchmark."""
     result = []
     prev_runtime = 0.0
@@ -27,7 +28,7 @@ def gen_data_for_benchmark(baselines: List[DataItem],
         perf_change = ''
         if prev_runtime:
             change = 100.0 * (prev_runtime / item.runtime - 1.0)
-            if is_significant_percent_change(item.benchmark, change):
+            if is_significant_percent_change(item.benchmark, change, is_microbenchmark):
                 perf_change = '%+.1f%%' % change
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
@@ -69,7 +70,12 @@ def gen_reports_for_benchmarks(data: BenchmarkData,
     for benchmark in data.baselines:
         runs = data.runs[benchmark]
         runs = sort_data_items(runs, commit_order)
-        items = gen_data_for_benchmark(data.baselines[benchmark], runs, commit_dates)
+        items = gen_data_for_benchmark(
+            data.baselines[benchmark],
+            runs,
+            commit_dates,
+            benchmark in data.microbenchmarks,
+        )
         table = gen_benchmark_table(items)
         fnam = os.path.join(output_dir, '%s.md' % benchmark)
         lines = []
