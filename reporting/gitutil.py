@@ -61,6 +61,22 @@ def get_commit_times(repo_dir: str, commits: List[str]) -> Dict[str, Tuple[str, 
     return result
 
 
+def pull_repo(repo_dir: str) -> None:
+    subprocess.check_call(['git', 'pull', 'origin', 'master'], cwd=repo_dir)
+
+
+def push_repo(repo_dir: str) -> None:
+    subprocess.check_call(['git', 'push', 'origin', 'master'], cwd=repo_dir)
+
+
+def git_add(repo_dir, fnam: str) -> None:
+    subprocess.check_call(['git', 'add', fnam], cwd=repo_dir)
+
+
+def git_commit(repo_dir, paths: List[str], message: str) -> None:
+    subprocess.check_call(['git', 'commit', '-m', message] + paths, cwd=repo_dir)
+
+
 # Mypy/mypyc specific utils
 
 

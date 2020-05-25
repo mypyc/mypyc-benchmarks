@@ -107,6 +107,15 @@ def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
     return BenchmarkData(baselines, runs, microbenchmarks, source_locations)
 
 
+def get_benchmark_names() -> Set[str]:
+    """Get names of all benchmarks (normal and microbenchmarks)."""
+    result = set()
+    data = subprocess.check_output(['python', 'runbench.py', '--list']).decode('ascii')
+    for line in data.splitlines():
+        result.add(line.split()[0])
+    return result
+
+
 def get_microbenchmark_names() -> Set[str]:
     result = set()
     data = subprocess.check_output(['python', 'runbench.py', '--list']).decode('ascii')

@@ -1,4 +1,4 @@
-"""Utility that collects interpreted benchmark results for a range of commits.
+"""Utility that collects interpreted benchmark timings for a commit.
 
 Run "python3 -m reporting.collect_baseline --help" for more information.
 """
