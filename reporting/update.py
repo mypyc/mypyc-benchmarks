@@ -107,14 +107,12 @@ def run_benchmark(commit: str, benchmark: str, mypy_repo: str, data_repo: str) -
     log('Running benchmark "%s" against mypy commit %s' % (benchmark, commit))
     cmd = ['python', '-m', 'reporting.collect',
            benchmark, mypy_repo, data_repo, '%s~1' % commit, commit]
-    if not dry_run:
-        run(cmd, cwd=benchmarks_repo)
+    run(cmd, cwd=benchmarks_repo)
 
 
 def generate_reports(mypy_repo: str, data_repo: str) -> None:
     heading('Generating reports')
-    if not dry_run:
-        run(['python', '-m', 'reporting.genreports', mypy_repo, data_repo], cwd=benchmarks_repo)
+    run(['python', '-m', 'reporting.genreports', mypy_repo, data_repo], cwd=benchmarks_repo)
 
 
 def commit(data_repo: str, new_benchmarks: List[str]) -> None:
@@ -124,6 +122,7 @@ def commit(data_repo: str, new_benchmarks: List[str]) -> None:
         if not dry_run:
             git_add(data_repo, baseline_csv_path(data_repo, benchmark))
             git_add(data_repo, compiled_csv_path(data_repo, benchmark))
+    log('Committing changes')
     if not dry_run:
         git_commit(data_repo, [DATA_DIR, REPORTS_DIR], 'Update benchmark data and reports')
 
@@ -170,11 +169,12 @@ def main() -> None:
 
     generate_reports(mypy_repo, data_repo)
 
-    if not no_git and not dry_run:
+    if not no_git:
         commit(data_repo, new_benchmarks )
 
         heading('Pushing %s' % data_repo)
-        push_repo(data_repo)
+        if not dry_run:
+            push_repo(data_repo)
 
 
 if __name__ == '__main__':
