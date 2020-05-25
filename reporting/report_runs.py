@@ -5,7 +5,8 @@ import os
 
 from reporting.markdown import bold, mypy_commit_link
 from reporting.data import (
-    DataItem, find_baseline, BenchmarkData, sort_data_items, is_significant_percent_change
+    DataItem, find_baseline, BenchmarkData, sort_data_items, is_significant_percent_change,
+    significant_percent_change
 )
 
 
@@ -70,17 +71,25 @@ def gen_reports_for_benchmarks(data: BenchmarkData,
     for benchmark in data.baselines:
         runs = data.runs[benchmark]
         runs = sort_data_items(runs, commit_order)
+        is_microbenchmark = benchmark in data.microbenchmarks
         items = gen_data_for_benchmark(
             data.baselines[benchmark],
             runs,
             commit_dates,
-            benchmark in data.microbenchmarks,
+            is_microbenchmark,
         )
         table = gen_benchmark_table(items)
         fnam = os.path.join(output_dir, '%s.md' % benchmark)
         lines = []
         lines.append('# Benchmark results for "%s"' % benchmark)
         lines.append('')
+        if is_microbenchmark:
+            threshold = significant_percent_change(benchmark, is_microbenchmark)
+            lines.append("**Note:** This is a microbenchmark. Results can be noisy.")
+            lines.append(
+                "A change of less than **%.1f%%** is considered insignificant." % threshold
+            )
+            lines.append("")
         lines.extend(table)
         os.makedirs(output_dir, exist_ok=True)
         print('writing %s' % fnam)
