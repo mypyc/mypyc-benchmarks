@@ -19,6 +19,7 @@ from datetime import datetime
 import argparse
 import os
 import subprocess
+import sys
 
 from reporting.common import DATA_DIR, REPORTS_DIR
 from reporting.gitutil import pull_repo, push_repo, git_add, git_commit, get_commit_range
@@ -33,6 +34,7 @@ dry_run = False
 
 def log(*args: object) -> None:
     print('[%s]' % datetime.utcnow(), *args)
+    sys.stdout.flush()
 
 
 def heading(*args: object) -> None:
@@ -47,6 +49,7 @@ def run(cmd: List[str], cwd: str) -> int:
     else:
         print('> cd %s' % cwd)
         print('> ' + ' '.join(cmd))
+        sys.stdout.flush()
         return 0
 
 
