@@ -22,7 +22,7 @@ import subprocess
 import sys
 
 from reporting.common import DATA_DIR, REPORTS_DIR
-from reporting.gitutil import pull_repo, push_repo, git_add, git_commit, get_commit_range
+from reporting.gitutil import pull_repo, push_repo, git_commit, get_commit_range
 from reporting.data import get_benchmark_names, load_data
 
 
@@ -47,7 +47,8 @@ def run(cmd: List[str], cwd: str) -> int:
     if not dry_run:
         return subprocess.check_call(cmd, cwd=cwd)
     else:
-        print('> cd %s' % cwd)
+        if os.path.abspath(cwd) != os.getcwd():
+            print('> cd %s' % cwd)
         print('> ' + ' '.join(cmd))
         sys.stdout.flush()
         return 0
@@ -132,11 +133,10 @@ def generate_reports(mypy_repo: str, data_repo: str) -> None:
 def commit(data_repo: str, new_benchmarks: List[str]) -> None:
     heading('Committing changes to data and reports')
     for benchmark in new_benchmarks:
-        log('Adding csv files for "%s"' % benchmark)
-        if not dry_run:
-            git_add(data_repo, baseline_csv_path(data_repo, benchmark))
-            git_add(data_repo, compiled_csv_path(data_repo, benchmark))
-    log('Committing changes')
+        log('Git add csv data files for "%s"' % benchmark)
+        run(['git', 'add', baseline_csv_path(data_repo, benchmark)], cwd=data_repo)
+        run(['git', 'add', compiled_csv_path(data_repo, benchmark)], cwd=data_repo)
+    log('Committing changes to repository')
     if not dry_run:
         git_commit(data_repo, [DATA_DIR, REPORTS_DIR], 'Update benchmark data and reports')
 
