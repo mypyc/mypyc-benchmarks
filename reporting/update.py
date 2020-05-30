@@ -89,7 +89,11 @@ def collect_new_baselines(data_repo: str) -> List[str]:
 
 def run_compiled_benchmarks(mypy_repo: str, data_repo: str) -> None:
     benchmarks = get_benchmark_names()
+    heading('Determining new commits')
     commits = get_commits_without_results(mypy_repo, data_repo)
+    log('Found %d commits without results:' % len(commits))
+    for commit in commits:
+        log(' * %s' % commit)
     for commit in commits:
         heading('Running benchmarks against mypy commit %s' % commit)
         for benchmark in benchmarks:
