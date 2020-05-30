@@ -172,6 +172,10 @@ def main() -> None:
     global dry_run
     mypy_repo, data_repo, dry_run, no_git = parse_args()
 
+    heading('Starting a run')
+    log('mypy_repo:', mypy_repo)
+    log('data_repo:', data_repo)
+
     if not no_git:
         # Pull latest mypyc, benchmarks and benchmark scripts.
         # Note that we won't run the latest update script if it gets updated!
