@@ -175,7 +175,7 @@ def main() -> None:
     if not no_git:
         # Pull latest mypyc, benchmarks and benchmark scripts.
         # Note that we won't run the latest update script if it gets updated!
-        pull_repos([mypy_repo, benchmarks_repo])
+        pull_repos([mypy_repo, benchmarks_repo, data_repo])
 
     # Collect baseline interpreted measurements for any new benchmarks.
     new_benchmarks = collect_new_baselines(data_repo)
