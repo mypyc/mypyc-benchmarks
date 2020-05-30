@@ -91,3 +91,35 @@ def int_divmod() -> None:
             q, r = divmod(x, 23)
             n += q + r
     assert n == 17167493000000, n
+
+
+@benchmark
+def int_list() -> None:
+    a = list(range(200))
+    b = list(reversed(a))
+    c = [-1, 3, 7, 1234] * 40
+    n = 0
+    for i in range(4000):
+        n += sum_ints(a)
+        n += min_int(a)
+        n += min_int(b)
+        n += sum_ints(b)
+        n += sum_ints(c)
+        n += min_int(c)
+    assert n == 358076000, n
+
+
+def sum_ints(a: List[int]) -> int:
+    s = 0
+    for x in a:
+        s += x
+    return s
+
+
+def min_int(a: List[int]) -> int:
+    minimum = a[0]
+    for i in range(1, len(a)):
+        x = a[i]
+        if x < minimum:
+            minimum = x
+    return minimum
