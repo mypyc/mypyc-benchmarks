@@ -72,5 +72,5 @@ def bench_spectral_norm(loops: int) -> float:
 
 
 @benchmark
-def spectral_norm():
+def spectral_norm() -> None:
     bench_spectral_norm(3)
