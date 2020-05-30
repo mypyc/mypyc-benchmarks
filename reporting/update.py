@@ -77,21 +77,25 @@ def collect_new_baselines(data_repo: str) -> List[str]:
     result = []
     heading('Looking for new benchmarks')
     benchmarks = get_benchmark_names()
-    if not benchmarks:
-        log('No new benchmarks found')
-    else:
-        log('Found %d new benchmarks without baseline data:' % len(benchmarks))
-        for benchmark in benchmarks:
-            log(' * %s' % benchmark)
+    new_benchmarks = []
     for benchmark in benchmarks:
         baseline_fnam = baseline_csv_path(data_repo, benchmark)
         if not os.path.isfile(baseline_fnam):
-            heading('Collecting baseline for new benchmark "%s"' % benchmark)
-            cmd = ['python', '-m', 'reporting.collect_baseline', benchmark, data_repo]
-            run(cmd, cwd=benchmarks_repo)
-            if not dry_run:
-                assert os.path.isfile(baseline_fnam)
-            result.append(benchmark)
+            new_benchmarks.append(benchmark)
+    if not new_benchmarks:
+        log('No new benchmarks found')
+    else:
+        log('Found %d new benchmarks without baseline data:' % len(new_benchmarks))
+        for benchmark in new_benchmarks:
+            log(' * %s' % benchmark)
+    for benchmark in new_benchmarks:
+        baseline_fnam = baseline_csv_path(data_repo, benchmark)
+        heading('Collecting baseline for new benchmark "%s"' % benchmark)
+        cmd = ['python', '-m', 'reporting.collect_baseline', benchmark, data_repo]
+        run(cmd, cwd=benchmarks_repo)
+        if not dry_run:
+            assert os.path.isfile(baseline_fnam)
+        result.append(benchmark)
     return result
 
 
