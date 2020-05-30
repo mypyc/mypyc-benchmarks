@@ -69,7 +69,7 @@ def push_repo(repo_dir: str) -> None:
     subprocess.check_call(['git', 'push', 'origin', 'master'], cwd=repo_dir)
 
 
-def git_commit(repo_dir, paths: List[str], message: str) -> None:
+def git_commit(repo_dir: str, paths: List[str], message: str) -> None:
     subprocess.check_call(['git', 'commit', '-m', message] + paths, cwd=repo_dir)
 
 
