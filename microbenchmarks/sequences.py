@@ -320,3 +320,27 @@ def list_for_reversed() -> None:
             for s in reversed(aa):
                 n += s
     assert n == 799400000, n
+
+
+@benchmark
+def sieve() -> None:
+    n = 0
+    for i in range(1000):
+        n += num_primes(1000)
+    assert n == 168000, n
+
+
+def num_primes(n: int) -> int:
+    is_prime = [True] * (n + 1)
+    is_prime[0] = is_prime[1] = False
+    for i in range(2, n + 1):
+        if is_prime[i] and i * i <= n:
+            j = i * i
+            while j <= n:
+                is_prime[j] = False
+                j += i
+    count = 0
+    for b in is_prime:
+        if b:
+            count += 1
+    return count
