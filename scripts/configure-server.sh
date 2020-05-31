@@ -15,9 +15,14 @@ if [ "$(whoami)" != root ]; then
 fi
 
 if [ ! -d /home/$user ]; then
-    echo "error: User $user does not exist"
+    echo "error: User '$user' does not exist"
     echo
-    echo "Add the user and give it ssh access to GitHub as user mypyc-bot"
+    echo "Follow these steps:"
+    echo " * Create the user"
+    echo " * Give it ssh access to GitHub as user mypyc-bot"
+    echo " * Set up git identity for the user:"
+    echo "   * git config --global user.email 'mypyc-bot@users.noreply.github.com'"
+    echo "   * git config --global user.name 'mypyc bot'"
     exit 1
 fi
 
