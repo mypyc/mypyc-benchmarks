@@ -69,7 +69,7 @@ def gen_reports_for_benchmarks(data: BenchmarkData,
                                commit_dates: Dict[str, Tuple[str, str]]) -> None:
     """Generate separate reports for each benchmark about their runs."""
     for benchmark in data.baselines:
-        runs = data.runs[benchmark]
+        runs = data.runs.get(benchmark, [])
         runs = sort_data_items(runs, commit_order)
         is_microbenchmark = benchmark in data.microbenchmarks
         items = gen_data_for_benchmark(
