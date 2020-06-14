@@ -21,6 +21,8 @@ source $base/venv/bin/activate
 
 cd $base/mypyc-benchmarks
 
+set -o pipefail
+
 python -m reporting.update $base/mypy $base/mypyc-benchmark-results 2>&1 | \
     tee -a $logfile
 
