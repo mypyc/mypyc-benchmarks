@@ -52,7 +52,7 @@ if [ ! -d $base/mypy ]; then
     echo "Setting up $base/mypy"
     mkdir $base/mypy
     chown $user:$user $base/mypy
-    sudo -u $user git clone git@github.com:python/mypy.git $base/mypy
+    sudo -u $user git clone --recurse-submodules git@github.com:python/mypy.git $base/mypy
 fi
 
 if [ ! -d $base/venv ]; then
