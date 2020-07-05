@@ -21,7 +21,7 @@ import os
 import subprocess
 import sys
 
-from reporting.common import DATA_DIR, REPORTS_DIR
+from reporting.common import DATA_DIR, REPORTS_DIR, BENCHMARKS_DIR
 from reporting.gitutil import (
     pull_repo, push_repo, git_commit, get_commit_range, checkout_commit
 )
@@ -142,6 +142,9 @@ def commit(data_repo: str, new_benchmarks: List[str]) -> None:
         log('Git add csv data files for "%s"' % benchmark)
         run(['git', 'add', baseline_csv_path(data_repo, benchmark)], cwd=data_repo)
         run(['git', 'add', compiled_csv_path(data_repo, benchmark)], cwd=data_repo)
+        run(['git', 'add',
+             os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR, '%s.md' % benchmark)],
+            cwd=data_repo)
     log('Committing changes to repository')
     if not dry_run:
         git_commit(data_repo, [DATA_DIR, REPORTS_DIR], 'Update benchmark data and reports')
