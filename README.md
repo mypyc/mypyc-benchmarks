@@ -9,13 +9,21 @@ performance improvement.
 big performance differences related to specific operations or language
 features. They don't reflect real-world performance.*
 
-## Prerequisites
+## Benchmark results
+
+We have a service that automatically collects benchmark results for
+all mypyc and mypy commits:
+
+* [Benchmark results](https://github.com/mypyc/mypyc-benchmark-results/blob/master/reports/summary-main.md)
+* [Microbenchmark results](https://github.com/mypyc/mypyc-benchmark-results/blob/master/reports/summary-microbenchmarks.md)
+
+## Running benchmarks
+
+Prerequisites:
 
 * Python 3.7 or later on Linux (or macOS?)
 * `mypyc` in `PATH`
 * A working Python C development environment
-
-## Running benchmarks
 
 Display the names of available benchmarks using `runbench.py --list`:
 
