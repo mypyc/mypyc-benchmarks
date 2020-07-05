@@ -23,7 +23,7 @@ import sys
 
 from reporting.common import DATA_DIR, REPORTS_DIR, BENCHMARKS_DIR
 from reporting.gitutil import (
-    pull_repo, push_repo, git_commit, get_commit_range, checkout_commit
+    pull_repo, push_repo, git_commit, get_commit_range, checkout_commit, get_revision_hash
 )
 from reporting.data import get_benchmark_names, load_data
 
@@ -101,7 +101,7 @@ def collect_new_baselines(data_repo: str) -> List[str]:
     return result
 
 
-def run_compiled_benchmarks(mypy_repo: str, data_repo: str) -> None:
+def run_compiled_benchmarks(mypy_repo: str, data_repo: str, new_benchmarks: List[str]) -> None:
     benchmarks = get_benchmark_names()
     heading('Determining new mypy/mypyc commits')
     commits = get_commits_without_results(mypy_repo, data_repo)
@@ -112,6 +112,12 @@ def run_compiled_benchmarks(mypy_repo: str, data_repo: str) -> None:
         heading('Running benchmarks against mypy commit %s' % commit)
         for benchmark in benchmarks:
             run_benchmark(commit, benchmark, mypy_repo, data_repo)
+    if not commits:
+        # If there are no new commits, we still have to get a result
+        # for each new benchmark.
+        for benchmark in new_benchmarks:
+            master_commit = get_revision_hash(mypy_repo, 'master')
+            run_benchmark(master_commit, benchmark, mypy_repo, data_repo)
 
 
 def get_commits_without_results(mypy_repo: str, data_repo: str) -> List[str]:
@@ -193,7 +199,7 @@ def main() -> None:
     # Collect baseline interpreted measurements for any new benchmarks.
     new_benchmarks = collect_new_baselines(data_repo)
 
-    run_compiled_benchmarks(mypy_repo, data_repo)
+    run_compiled_benchmarks(mypy_repo, data_repo, new_benchmarks)
 
     checkout_commit(mypy_repo, 'master')
 
