@@ -62,7 +62,7 @@ def get_commit_times(repo_dir: str, commits: List[str]) -> Dict[str, Tuple[str, 
 
 
 def pull_repo(repo_dir: str) -> None:
-    subprocess.check_call(['git', 'pull', 'origin', 'master'], cwd=repo_dir)
+    subprocess.check_call(['git', 'pull'], cwd=repo_dir)
 
 
 def push_repo(repo_dir: str) -> None:
