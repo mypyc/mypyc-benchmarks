@@ -156,11 +156,23 @@ def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
     assert False, "No baseline found for %r" % (run,)
 
 
+# Override the default significance levels for benchmarks that aren't very noisy.
+significant_percent_change_overrides = {
+    'sieve': 3.0,
+    'str_methods_2': 3.0,
+    'str_format': 10.0,
+    'str_methods': 10.0,
+    'matrix_multiply': 10.0,
+}
+
+
 def significant_percent_change(benchmark: str, is_microbenchmark: bool) -> float:
-    if is_microbenchmark:
+    if benchmark in significant_percent_change_overrides:
+        return significant_percent_change_overrides[benchmark]
+    elif is_microbenchmark:
         # Microbenchmark measurements are noisy. By default, only
-        # consider 20% change as significant.
-        return 20.0
+        # consider 15% change as significant.
+        return 15.0
     else:
         # Other benchmarks are less noisy.
         return 3.0
