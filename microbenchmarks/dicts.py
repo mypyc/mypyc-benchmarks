@@ -119,3 +119,15 @@ def dict_call_generator() -> None:
         for s in a:
             d = dict((key, value) for key, value in s)
             assert len(d) == len(s)
+
+
+@benchmark
+def dict_del_item() -> None:
+    d = {'long_lived': 'value'}
+    for j in range(1000 * 1000):
+        d['xyz'] = 'asdf'
+        d['asdf'] = 'lulz'
+        del d['xyz']
+        d['foobar'] = 'baz zar'
+        del d['foobar']
+        del d['asdf']
