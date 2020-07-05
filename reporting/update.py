@@ -22,7 +22,9 @@ import subprocess
 import sys
 
 from reporting.common import DATA_DIR, REPORTS_DIR
-from reporting.gitutil import pull_repo, push_repo, git_commit, get_commit_range
+from reporting.gitutil import (
+    pull_repo, push_repo, git_commit, get_commit_range, checkout_commit
+)
 from reporting.data import get_benchmark_names, load_data
 
 
@@ -189,6 +191,8 @@ def main() -> None:
     new_benchmarks = collect_new_baselines(data_repo)
 
     run_compiled_benchmarks(mypy_repo, data_repo)
+
+    checkout_commit(mypy_repo, 'master')
 
     generate_reports(mypy_repo, data_repo)
 
