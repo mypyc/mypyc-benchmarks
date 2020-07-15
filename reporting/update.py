@@ -60,6 +60,7 @@ def pull_repos(repos: List[str]) -> None:
     for repo in repos:
         heading('Pulling %s' % repo)
         if not dry_run:
+            checkout_commit(repo, 'master')
             pull_repo(repo)
 
 
