@@ -52,7 +52,12 @@ def run_bench(benchmark: str,
         min_iter = min_interpreted_iterations(benchmark)
         cmd.extend(['-i', '--min-iter', str(min_iter)])
     cmd.append(benchmark)
-    output = subprocess.check_output(cmd, env=env).decode("ascii")
+    try:
+        output = subprocess.check_output(cmd, env=env).decode("ascii")
+    except subprocess.CalledProcessError:
+        # The benchmark run failed. Record zero values to signal than something
+        # is wrong.
+        return 0.0, 0.0
     last_line = output.rstrip().splitlines()[-1]
     fields = last_line.split()
     if compiled:
