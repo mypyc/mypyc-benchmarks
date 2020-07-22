@@ -52,7 +52,10 @@ def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
     lines.append('| Date | Performance | Change | Mypy commit |')
     lines.append('| --- | :---: | :---: | --- |')
     for i, item in enumerate(data):
-        relative_perf = '%.2fx' % item.relative_perf
+        if item.relative_perf != 0.0:
+            relative_perf = '%.2fx' % item.relative_perf
+        else:
+            relative_perf = '**error**'
         if i == 0 or item.perf_change:
             relative_perf = bold(relative_perf)
         date = item.date
