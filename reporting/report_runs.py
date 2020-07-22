@@ -31,9 +31,13 @@ def gen_data_for_benchmark(baselines: List[DataItem],
             change = 100.0 * (prev_runtime / item.runtime - 1.0)
             if is_significant_percent_change(item.benchmark, change, is_microbenchmark):
                 perf_change = '%+.1f%%' % change
+        if item.runtime != 0.0:
+            relative = baseline.runtime / item.runtime
+        else:
+            relative = 0.0
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
-            relative_perf=baseline.runtime / item.runtime,
+            relative_perf=relative,
             perf_change=perf_change,
             mypy_commit=item.mypy_commit,
         )
