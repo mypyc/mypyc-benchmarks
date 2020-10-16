@@ -23,6 +23,7 @@ if [ ! -d /home/$user ]; then
     echo " * Set up git identity for the user:"
     echo "   * git config --global user.email 'mypyc-bot@users.noreply.github.com'"
     echo "   * git config --global user.name 'mypyc bot'"
+    echo " * Disable automatic package updates"
     exit 1
 fi
 
