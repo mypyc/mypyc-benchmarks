@@ -79,4 +79,17 @@ run()
 
 @benchmark
 def access_attr_from_interpreted() -> None:
-    pass
+    code = """
+def run():
+    o1 = C(44, 'foobar')
+    o2 = C(23, 'har')
+    n = 0
+    for i in range(500000):
+        o1.count
+        o2.name
+        o2.count
+        o1.name
+        o1.count += 1
+run()
+"""
+    exec(code, globals())
