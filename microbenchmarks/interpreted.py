@@ -31,9 +31,36 @@ run()
     exec(code, globals())
 
 
+class C:
+    def __init__(self, count: int, name: str) -> None:
+        self.count = count
+        self.name = name
+
+    def method0(self) -> None:
+        pass
+
+    def method1(self, x: str) -> str:
+        return x
+
+    def method3(self, count: int, name: str, thing: object) -> int:
+        return count
+
+
 @benchmark
 def call_method_from_interpreted() -> None:
-    pass
+    code = """
+def run():
+    obj = C(44, 'foobar')
+    for i in range(500000):
+        obj.method0()
+        obj.method1('foobar')
+        obj.method1('xyz')
+        obj.method3(i, 'foobar', 2.3)
+        obj.method3(5, 'foo', True)
+        obj.method3(i, name='foobar', thing=2.3)
+run()
+"""
+    exec(code, globals())
 
 
 @benchmark
