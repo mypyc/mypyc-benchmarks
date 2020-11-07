@@ -2,7 +2,7 @@ from benchmarking import benchmark, benchmark_with_context, BenchmarkContext
 
 
 @benchmark
-def int_binary_ops() -> None:
+def int_bitwise_ops() -> None:
     a = []
     for i in range(1000):
         a.append(i * i * 12753 % (2**20 - 1))
@@ -24,7 +24,7 @@ def int_binary_ops() -> None:
 
 
 @benchmark_with_context
-def int_long_binary_ops(bm: BenchmarkContext) -> None:
+def int_long_bitwise_ops(bm: BenchmarkContext) -> None:
     a = []
     for i in range(1000):
         a.append(i * i ** (i // 15))
