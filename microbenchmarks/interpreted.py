@@ -65,7 +65,16 @@ run()
 
 @benchmark
 def call_type_from_interpreted() -> None:
-    pass
+    code = """
+def run():
+    obj = C(44, 'foobar')
+    for i in range(500000):
+        C(i, 'foobar')
+        C(55, 'bar')
+        C(count=55, name='bar')
+run()
+"""
+    exec(code, globals())
 
 
 @benchmark
