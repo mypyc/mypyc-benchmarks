@@ -7,8 +7,8 @@ def func0() -> None:
     pass
 
 
-def func1(x: str) -> str:
-    return x
+def func1(string: str) -> str:
+    return string
 
 
 def func3(count: int, name: str, thing: object) -> int:
@@ -16,15 +16,29 @@ def func3(count: int, name: str, thing: object) -> int:
 
 
 @benchmark
-def call_function_from_interpreted() -> None:
+def positional_args_from_interpreted() -> None:
     code = """
 def run():
     for i in range(500000):
         func0()
         func1('foobar')
-        func1('xyz')
         func3(i, 'foobar', 2.3)
+        func1('xyz')
         func3(5, 'foo', True)
+run()
+"""
+    exec(code, globals())
+
+
+@benchmark
+def keyword_args_from_interpreted() -> None:
+    code = """
+def run():
+    for i in range(500000):
+        func1(string='foobar')
+        func3(i, 'foobar', thing=2.3)
+        func1(string='xyz')
+        func3(thing=True, name='foo', count=5)
         func3(i, name='foobar', thing=2.3)
 run()
 """
