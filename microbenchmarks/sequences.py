@@ -344,3 +344,22 @@ def num_primes(n: int) -> int:
         if b:
             count += 1
     return count
+
+
+@benchmark
+def sorted_with_key():
+    n = 10
+    a = []
+    for i in range(n):
+        aa = []
+        for j in range(i):
+            aa.append(j * 971 % 11)
+        a.append(aa)
+    a2 = [(str(i), i * 5 % 11) for i in range(20)]
+    c = 0
+    for i in range(20000):
+        for seq in a:
+            c += len(sorted(seq, key=lambda x: -x))
+        a3 = sorted(a2, key=lambda x: x[1])
+        c += len(sorted(a3, key=lambda x: x[0]))
+    assert c == 1300000, c
