@@ -23,6 +23,7 @@ def gen_summary_data(benchmarks: List[str],
                      microbenchmarks: Set[str]) -> List[SummaryItem]:
     result = []
     for benchmark in benchmarks:
+        print('generating summary data for %r' % benchmark)
         newest_item = min(runs[benchmark], key=lambda x: commit_order[x.mypy_commit])
         baseline = find_baseline(baselines[benchmark], newest_item)
         three_months_ago = datetime.utcnow() - timedelta(days=30 * 3)
@@ -74,7 +75,7 @@ def gen_summary_report(benchmarks: List[str],
                        commit_order: Dict[str, int],
                        commit_times: Dict[str, Tuple[str, str]],
                        microbenchmarks: Set[str]) -> None:
-    print('processing %s' % title)
+    print('processing %r' % title)
     items = gen_summary_data(
         benchmarks,
         data.baselines,
