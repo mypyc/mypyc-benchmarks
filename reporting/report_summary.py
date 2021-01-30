@@ -74,6 +74,7 @@ def gen_summary_report(benchmarks: List[str],
                        commit_order: Dict[str, int],
                        commit_times: Dict[str, Tuple[str, str]],
                        microbenchmarks: Set[str]) -> None:
+    print('processing %s' % title)
     items = gen_summary_data(
         benchmarks,
         data.baselines,
