@@ -22,7 +22,7 @@ from reporting.common import get_csv_path, CC
 
 # Minimum number of iterations for an interpreted benchmark (this needs to be high,
 # since interpreted measurements are noisier than compiled)
-MIN_INTERPRETED_ITER = 200
+MIN_INTERPRETED_ITER = 300
 
 
 def min_interpreted_iterations(benchmark: str) -> int:
