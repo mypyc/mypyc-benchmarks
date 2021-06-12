@@ -1,6 +1,6 @@
 #!/bin/bash
 # Tune Linux for more repeatable measurements.
-# This assumes a 4-core/8-thread CPU.
+# This assumes a 4-core CPU (no hyperthreading, or hyperthreading disabled in BIOS).
 #
 # Adapted from https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux
 
@@ -11,10 +11,4 @@ echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
 for f in /sys/devices/system/cpu/cpu[0123]/cpufreq/scaling_governor
 do
     echo performance | sudo tee "$f"
-done
-
-# Disable hyperthreading
-for f in /sys/devices/system/cpu/cpu[4567]/online
-do
-    echo 0 | sudo tee "$f"
 done
