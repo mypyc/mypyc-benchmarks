@@ -35,8 +35,11 @@ def get_hardware_id() -> str:
     if arch == b'x86_64' and os.path.exists(fnam):
         with open(fnam) as f:
             data = f.read()
-        if 'i7-2600K' in data:
+        if 'i5-1145G7' in data:
             # Special case for the current server hardware configuration.
+            return 'Intel Core i5-1145G7 (64-bit)'
+        if 'i7-2600K' in data:
+            # Special case for the previous server hardware configuration.
             return 'Intel Core i7-2600K (64-bit)'
         if 'Ryzen 9 3950X' in data:
             # Another special casing.
