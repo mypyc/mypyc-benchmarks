@@ -42,7 +42,7 @@ def build(n: int) -> Tree:
 
 
 @benchmark
-def sum_tree():
+def sum_tree_singledispatch():
     # making the tree too big causes building the tree to take too long or just crash python entirely
     tree = build(10)
     n: int = 0
