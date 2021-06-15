@@ -25,12 +25,12 @@ def calc_sum(x: Tree) -> int:
     raise TypeError("invalid type for x")
 
 
-@calc_sum.register
+@calc_sum.register(Leaf)
 def sum_leaf(x: Leaf) -> int:
     return 0
 
 
-@calc_sum.register
+@calc_sum.register(Node)
 def sum_node(x: Node) -> int:
     return x.value + calc_sum(x.left) + calc_sum(x.right)
 
