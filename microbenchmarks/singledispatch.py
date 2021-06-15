@@ -2,7 +2,7 @@ from functools import singledispatch
 
 from benchmarking import benchmark
 
-NUM_ITER = 100_000
+NUM_ITER = 500
 
 
 class Tree:
