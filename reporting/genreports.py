@@ -13,6 +13,7 @@ from reporting.gitutil import get_mypy_commit_sort_order, get_mypy_commit_dates
 from reporting.data import (
     BenchmarkData,
     load_data,
+    normalize_data,
     sort_data_items,
 )
 from reporting.report_runs import gen_reports_for_benchmarks
@@ -40,6 +41,7 @@ def main() -> None:
     commit_order = get_mypy_commit_sort_order(mypy_repo)
     commit_times = get_mypy_commit_dates(mypy_repo)
     data = load_data(data_repo)
+    normalize_data(data)
 
     recent_item = sort_data_items(data.runs['richards'], commit_order)[0]
     python_version = recent_item.python_version

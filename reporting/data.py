@@ -7,7 +7,8 @@ import glob
 import subprocess
 
 from reporting.common import (
-    get_hardware_id, get_os_version, get_c_compiler_version, CC, DATA_DIR, SOURCE_DIRS
+    get_hardware_id, get_os_version, get_c_compiler_version, CC, DATA_DIR, SOURCE_DIRS,
+    SCALING_FNAM
 )
 
 
@@ -77,6 +78,16 @@ def read_csv(fnam: str) -> List[DataItem]:
     return result
 
 
+class ScalingItem(NamedTuple):
+    # Scale old results by this factor to get an estimate of the corresponding
+    # result on the new configuration (1.0 == identical)
+    factor: float
+    old_hardware_id: str
+    old_python_version: str  # X.Y (e.g. 3.8)
+    new_hardware_id: str
+    new_python_version: str  # X.Y (e.g. 3.8)
+
+
 class BenchmarkData(NamedTuple):
     # Data about interpreted baseline runs (benchmark name as key)
     baselines: Dict[str, List[DataItem]]
@@ -86,14 +97,23 @@ class BenchmarkData(NamedTuple):
     microbenchmarks: Set[str]
     # Dict from benchmark name to (source .py file path, line number)
     source_locations: Dict[str, Tuple[str, int]]
+    # Scaling information for benchmark results between different hardware and
+    # python versions (benchmark name as key)
+    scaling: Dict[str, List[ScalingItem]]
 
 
 def load_data(data_repo: str) -> BenchmarkData:
-    """Load all benchmark data from csv files."""
+    """Load all benchmark data from csv files.
+
+    Call normalize_data() afterwards to normalize data collected from different
+    hardware/Python configurations.
+    """
     baselines = {}
     runs = {}
     files = glob.glob(os.path.join(data_repo, DATA_DIR, '*.csv'))
     for fnam in files:
+        if os.path.basename(fnam) == SCALING_FNAM:
+            continue
         benchmark = os.path.basename(fnam)
         benchmark, _, _ = benchmark.partition('.csv')
         benchmark, suffix, _ = benchmark.partition('-cpython')
@@ -104,7 +124,21 @@ def load_data(data_repo: str) -> BenchmarkData:
             runs[benchmark] = items
     microbenchmarks = get_microbenchmark_names()
     source_locations = get_source_locations()
-    return BenchmarkData(baselines, runs, microbenchmarks, source_locations)
+    scaling = load_scaling_data(data_repo)
+    return BenchmarkData(baselines, runs, microbenchmarks, source_locations, scaling)
+
+
+def load_scaling_data(data_repo: str) -> Dict[str, List[ScalingItem]]:
+    """Load data about how to scale benchmark results between different configurations."""
+    fnam = os.path.join(data_repo, DATA_DIR, SCALING_FNAM)
+    with open(fnam) as f:
+        lines = f.readlines()
+    result: Dict[str, List[ScalingItem]] = {}
+    for line in lines:
+        benchmark, factor, old_hw, old_py, new_hw, new_py = line.strip().split(',')
+        item = ScalingItem(float(factor), old_hw, old_py, new_hw, new_py)
+        result.setdefault(benchmark, []).append(item)
+    return result
 
 
 def get_benchmark_names() -> Set[str]:
@@ -182,3 +216,44 @@ def is_significant_percent_change(benchmark: str,
                                   delta_percentage: float,
                                   is_microbenchmark: bool) -> bool:
     return abs(delta_percentage) >= significant_percent_change(benchmark, is_microbenchmark)
+
+
+def normalize_data(data: BenchmarkData) -> None:
+    """Normalize results collected on old configuration to the current config.
+
+    Also remove duplicate items.
+
+    This changes data in-place!
+    """
+    # TODO: If there are scaling items from C1 to C2 and C2 to C3, support calculating
+    #       scaling item from C1 to C3.
+    current_py = f'%d.%d' % sys.version_info[:2]
+    current_hw = get_hardware_id()
+    for bm, runs in data.runs.items():
+        scaling = data.scaling.get(bm)
+        if scaling is None:
+            # No scaling information available
+            continue
+        seen_commits = set()
+        new_runs = []
+        for run in runs:
+            if run.mypy_commit in seen_commits:
+                continue
+            seen_commits.add(run.mypy_commit)
+            for scale_item in scaling:
+                if (run.hardware_id == scale_item.old_hardware_id
+                        and run.python_version.startswith(scale_item.old_python_version)
+                        and scale_item.new_hardware_id == current_hw
+                        and scale_item.new_python_version == current_py):
+                    run = DataItem(benchmark=run.benchmark,
+                                   timestamp=run.timestamp,
+                                   runtime=run.runtime / scale_item.factor,
+                                   stdev_percent=run.stdev_percent,
+                                   mypy_commit=run.mypy_commit,
+                                   benchmark_commit=run.benchmark_commit,
+                                   python_version=run.python_version,
+                                   hardware_id=run.hardware_id,
+                                   os_version=run.os_version)
+                    break
+            new_runs.append(run)
+        runs[:] = new_runs

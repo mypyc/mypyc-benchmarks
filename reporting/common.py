@@ -19,6 +19,10 @@ BENCHMARKS_DIR = 'benchmarks'
 # Directories containing benchmark .py files
 SOURCE_DIRS = ('benchmarks', 'microbenchmarks')
 
+# File with information about how to scale results between different hardware
+# configurations and Python versions
+SCALING_FNAM = 'scaling.csv'
+
 
 def get_csv_path(data_repo: str, benchmark: str, cpython: bool = False) -> str:
     data_dir = os.path.join(data_repo, DATA_DIR)
