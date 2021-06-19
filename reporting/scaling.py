@@ -11,7 +11,7 @@ results for both configurations in all benchmarks.
 Run like this:
 
   python3 -m reporting.scaling <mypy-hash> <result-repo> \
-      <old-hardware> <old-python> <new-hardware> <new-python> >> scaling.txt
+      <old-hardware> <old-python> <new-hardware> <new-python> >> data/scaling.csv
 
 Python version should be of form <major>.<minor>.
 
@@ -20,7 +20,7 @@ Example:
   python3 -m reporting.scaling 8d57ffa817526fde7715da13246f72f1b1d62b60 \
       /srv/mypyc-benchmark-results \
       "Intel Core i7-2600K (64-bit)" 3.8 \
-      "Intel Core i5-1145G7 (64-bit)" 3.8 >> scaling.txt
+      "Intel Core i5-1145G7 (64-bit)" 3.8 >> data/scaling.csv
 """
 
 import argparse
