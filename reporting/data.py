@@ -88,7 +88,7 @@ class BenchmarkData(NamedTuple):
     source_locations: Dict[str, Tuple[str, int]]
 
 
-def load_data(mypy_repo: str, data_repo: str) -> BenchmarkData:
+def load_data(data_repo: str) -> BenchmarkData:
     """Load all benchmark data from csv files."""
     baselines = {}
     runs = {}

@@ -39,7 +39,7 @@ def main() -> None:
     # Prepare input data.
     commit_order = get_mypy_commit_sort_order(mypy_repo)
     commit_times = get_mypy_commit_dates(mypy_repo)
-    data = load_data(mypy_repo, data_repo)
+    data = load_data(data_repo)
 
     recent_item = sort_data_items(data.runs['richards'], commit_order)[0]
     python_version = recent_item.python_version

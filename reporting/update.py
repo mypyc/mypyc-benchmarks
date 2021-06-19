@@ -123,7 +123,7 @@ def run_compiled_benchmarks(mypy_repo: str, data_repo: str, new_benchmarks: List
 
 def get_commits_without_results(mypy_repo: str, data_repo: str) -> List[str]:
     commits = get_commit_range(mypy_repo, 'HEAD~30', 'HEAD')
-    data = load_data(mypy_repo, data_repo)
+    data = load_data(data_repo)
     seen = set()
     for items in data.runs.values():
         for item in items:
