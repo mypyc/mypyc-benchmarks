@@ -80,6 +80,8 @@ def str_format_percent_operator() -> None:
     a = []
     tmp_str = "Foobar"
     for i in range(1000):
+        for _ in range(5):
+            a.append('%s' % tmp_str)
         a.append('%s-%d' % (tmp_str, i))
         a.append('%d %f str' % (i, i * 2.0))
 
@@ -97,6 +99,8 @@ def str_format_format_method() -> None:
     a = []
     tmp_str = "Foobar"
     for i in range(1000):
+        for _ in range(5):
+            a.append('{}'.format(tmp_str))
         a.append('{}-{}'.format(tmp_str, i))
         a.append('{} {} str'.format(i, i * 2.0))
 
@@ -114,6 +118,8 @@ def str_format_fstring() -> None:
     a = []
     tmp_str = "Foobar"
     for i in range(1000):
+        for _ in range(5):
+            a.append(f'{tmp_str}')
         a.append(f'{tmp_str}-{i}')
         a.append(f'{i} {i*2.0} str')
 
