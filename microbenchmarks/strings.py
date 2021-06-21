@@ -110,7 +110,7 @@ def str_format_format_method() -> None:
             n += len("foobar {} stuff".format(s))
             ss = "foobar {} stuff".format(s)
             n += len("{}-{}-{}".format(i, s, ss))
-    assert n == 12947500, n
+    assert n == 36897500, n
 
 
 @benchmark
@@ -129,7 +129,7 @@ def str_format_fstring() -> None:
             n += len(f"foobar {s} stuff")
             ss = f"foobar {s} stuff"
             n += len(f"{i}-{s}-{ss}")
-    assert n == 12947500, n
+    assert n == 36897500, n
 
 
 @benchmark
