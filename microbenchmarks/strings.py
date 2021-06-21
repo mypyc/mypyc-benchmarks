@@ -91,7 +91,7 @@ def str_format_percent_operator() -> None:
             n += len("foobar %s stuff" % s)
             ss = "foobar %s stuff" % s
             n += len("%d-%s-%s" % (i, s, ss))
-    assert n == 14447500, n
+    assert n == 38397500, n
 
 
 @benchmark
