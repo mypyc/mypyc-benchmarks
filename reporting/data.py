@@ -218,7 +218,7 @@ def is_significant_percent_change(benchmark: str,
     return abs(delta_percentage) >= significant_percent_change(benchmark, is_microbenchmark)
 
 
-def normalize_data(data: BenchmarkData) -> None:
+def normalize_data(data: BenchmarkData, current_py: str, current_hw: str) -> None:
     """Normalize results collected on old configuration to the current config.
 
     Also remove duplicate items.
@@ -227,8 +227,7 @@ def normalize_data(data: BenchmarkData) -> None:
     """
     # TODO: If there are scaling items from C1 to C2 and C2 to C3, support calculating
     #       scaling item from C1 to C3.
-    current_py = f'%d.%d' % sys.version_info[:2]
-    current_hw = get_hardware_id()
+    current_py = '.'.join(current_py.split('.')[:2])
     for bm, runs in data.runs.items():
         scaling = data.scaling.get(bm)
         if scaling is None:

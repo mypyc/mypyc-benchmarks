@@ -41,7 +41,6 @@ def main() -> None:
     commit_order = get_mypy_commit_sort_order(mypy_repo)
     commit_times = get_mypy_commit_dates(mypy_repo)
     data = load_data(data_repo)
-    normalize_data(data)
 
     recent_item = sort_data_items(data.runs['richards'], commit_order)[0]
     python_version = recent_item.python_version
@@ -52,6 +51,8 @@ def main() -> None:
         os_version,
         hardware_id,
     )
+
+    normalize_data(data, python_version, hardware_id)
 
     # Generate reports about individual benchmarks.
     per_benchmark_report_dir = os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR)
