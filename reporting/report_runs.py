@@ -24,11 +24,13 @@ def gen_data_for_benchmark(baselines: List[DataItem],
     """Generate data for each run of a single benchmark."""
     result = []
     prev_runtime = 0.0
+    prev_baseline_runtime = 0.0
     for item in reversed(runs):
         baseline = find_baseline(baselines, item)
         perf_change = ''
         if prev_runtime and item.runtime != 0.0:
-            change = 100.0 * (prev_runtime / item.runtime - 1.0)
+            change = 100.0 * ((baseline.runtime / item.runtime) /
+                              (prev_baseline_runtime / prev_runtime) - 1.0)
             if is_significant_percent_change(item.benchmark, change, is_microbenchmark):
                 perf_change = '%+.1f%%' % change
         if item.runtime != 0.0:
@@ -43,6 +45,7 @@ def gen_data_for_benchmark(baselines: List[DataItem],
         )
         result.append(new_item)
         prev_runtime = item.runtime
+        prev_baseline_runtime = baseline.runtime
     return list(reversed(result))
 
 
