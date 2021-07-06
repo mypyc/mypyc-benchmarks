@@ -25,16 +25,19 @@ def gen_summary_data(benchmarks: List[str],
     for benchmark in benchmarks:
         print('generating summary data for %r' % benchmark)
         newest_item = min(runs[benchmark], key=lambda x: commit_order[x.mypy_commit])
-        baseline = find_baseline(baselines[benchmark], newest_item)
+        new_baseline = find_baseline(baselines[benchmark], newest_item)
         three_months_ago = datetime.utcnow() - timedelta(days=30 * 3)
         old_item = find_item_at_time(runs[benchmark], three_months_ago, commit_times)
-        percentage_3m = 100.0 * (old_item.runtime / newest_item.runtime - 1.0)
+        old_baseline = find_baseline(baselines[benchmark], old_item)
+        relative_perf = ((new_baseline.runtime / newest_item.runtime) /
+                         (old_baseline.runtime / old_item.runtime))
+        percentage_3m = 100.0 * (relative_perf - 1.0)
         delta_3m = ''
         if is_significant_percent_change(benchmark, percentage_3m, benchmark in microbenchmarks):
             delta_3m = '%+.1f%%' % percentage_3m
         summary_item = SummaryItem(
             benchmark=benchmark,
-            relative_perf=baseline.runtime / newest_item.runtime,
+            relative_perf=new_baseline.runtime / newest_item.runtime,
             delta_three_months=delta_3m,
         )
         result.append(summary_item)
