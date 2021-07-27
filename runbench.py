@@ -8,8 +8,10 @@ import sys
 import time
 import subprocess
 import statistics
+from pathlib import Path
 
 from benchmarking import BenchmarkInfo, benchmarks
+from typing_extensions import Final
 
 
 # Minimum total time (seconds) to run a benchmark
@@ -17,6 +19,8 @@ MIN_TIME = 2.0
 # Minimum number of iterations to run a benchmark
 MIN_ITER = 10
 
+
+BINARY_EXTENSION: Final = 'pyd' if sys.platform == 'win32' else 'so'
 
 def run_in_subprocess(benchmark: BenchmarkInfo,
                       binary: Optional[str],
@@ -30,7 +34,7 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
 
     if not compiled and binary:
         os.rename(binary, binary + '.tmp')
-    cmd = ['python3', '-c', program]
+    cmd = [sys.executable, '-c', program]
     if priority:
         # Use nice to increase process priority.
         cmd = ['sudo', 'nice', '-n', '-5'] + cmd
@@ -140,8 +144,8 @@ def compile_benchmark(module: str, raw_output: bool, mypy_repo: Optional[str]) -
     else:
         # Find 'mypyc' via PATH and use PYTHONPATH set by caller.
         cmd = 'mypyc'
-    subprocess.run([cmd, fnam], check=True)
-    pattern = module.replace('.', '/') + '.*.so'
+    subprocess.run([sys.executable, cmd, fnam], check=True)
+    pattern = module.replace('.', '/') + f'.*.{BINARY_EXTENSION}'
     paths = glob.glob(pattern)
     assert len(paths) == 1
     return paths[0]
@@ -151,15 +155,18 @@ def import_all() -> None:
     files = glob.glob('microbenchmarks/*.py')
     files += glob.glob('benchmarks/*.py')
     for fnam in files:
-        if fnam.endswith('__init__.py') or not fnam.endswith('.py'):
+        filepath = Path(fnam).resolve()
+        if filepath.name == '__init__.py' or filepath.suffix != '.py':
             continue
-        module = re.sub(r'[.]py$', '', fnam).replace('/', '.')
+        benchmarks_root_dir = Path(__file__).parent.resolve()
+        module_parts = filepath.with_suffix("").relative_to(benchmarks_root_dir).parts
+        module = ".".join(module_parts)
         import_module(module)
 
 
 def delete_binaries() -> None:
-    files = glob.glob('microbenchmarks/*.so')
-    files += glob.glob('benchmarks/*.so')
+    files = glob.glob(f'microbenchmarks/*.{BINARY_EXTENSION}')
+    files += glob.glob(f'benchmarks/*.{BINARY_EXTENSION}')
     for fnam in files:
         os.remove(fnam)
 
