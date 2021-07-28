@@ -21,7 +21,7 @@ all mypyc and mypy commits:
 
 Prerequisites:
 
-* Python 3.7 or later on Linux (or macOS?)
+* Python 3.7 or later on Linux, macOS, or Windows
 * `mypyc` in `PATH`
 * A working Python C development environment
 
