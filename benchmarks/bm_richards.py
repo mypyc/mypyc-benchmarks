@@ -11,7 +11,7 @@ based on a Java version:
 """
 
 from __future__ import print_function
-from typing import List, Optional
+from typing import List, Optional, cast
 from typing_extensions import Final
 
 from six.moves import xrange
@@ -266,8 +266,7 @@ class DeviceTask(Task):
         Task.__init__(self, i, p, w, s, r)
 
     def fn(self, pkt: Optional[Packet], r: TaskRec) -> Optional[Task]:
-        d = r
-        assert isinstance(d, DeviceTaskRec)
+        d = cast(DeviceTaskRec, r)
         if pkt is None:
             pkt = d.pending
             if pkt is None:
@@ -289,8 +288,7 @@ class HandlerTask(Task):
         Task.__init__(self, i, p, w, s, r)
 
     def fn(self, pkt: Optional[Packet], r: TaskRec) -> Optional[Task]:
-        h = r
-        assert isinstance(h, HandlerTaskRec)
+        h = cast(HandlerTaskRec, r)
         if pkt is not None:
             if pkt.kind == K_WORK:
                 h.workInAdd(pkt)
@@ -323,8 +321,7 @@ class IdleTask(Task):
         Task.__init__(self, i, 0, None, s, r)
 
     def fn(self, pkt: Optional[Packet], r: TaskRec) -> Optional[Task]:
-        i = r
-        assert isinstance(i, IdleTaskRec)
+        i = cast(IdleTaskRec, r)
         i.count -= 1
         if i.count == 0:
             return self.hold()
@@ -349,8 +346,7 @@ class WorkTask(Task):
         Task.__init__(self, i, p, w, s, r)
 
     def fn(self, pkt: Optional[Packet], r: TaskRec) -> Optional[Task]:
-        w = r
-        assert isinstance(w, WorkerTaskRec)
+        w = cast(WorkerTaskRec, r)
         if pkt is None:
             return self.waitTask()
 
