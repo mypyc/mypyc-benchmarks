@@ -137,14 +137,19 @@ def compile_benchmark(module: str, raw_output: bool, mypy_repo: Optional[str]) -
     if not raw_output:
         print('compiling %s...' % module)
     env = os.environ.copy()
+    legacy_script = None
     if mypy_repo:
         # Use mypyc from specific mypy repository.
-        cmd = os.path.join(mypy_repo, 'scripts', 'mypyc')
         env['PYTHONPATH'] = mypy_repo
+        script_path = os.path.join(mypy_repo, 'scripts', 'mypyc')
+        if os.path.isfile(script_path):
+            # With older mypy revisions we must use scripts/mypyc.
+            legacy_script = script_path
+    if not legacy_script:
+        cmd = [sys.executable, '-m', 'mypyc']
     else:
-        # Find 'mypyc' via PATH and use PYTHONPATH set by caller.
-        cmd = 'mypyc'
-    subprocess.run([sys.executable, cmd, fnam], check=True)
+        cmd = [sys.executable, legacy_script]
+    subprocess.run(cmd + [fnam], check=True)
     pattern = module.replace('.', '/') + f'.*.{BINARY_EXTENSION}'
     paths = glob.glob(pattern)
     assert len(paths) == 1
