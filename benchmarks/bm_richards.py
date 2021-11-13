@@ -150,7 +150,7 @@ class TaskState(object):
         return self.packet_pending and self.task_waiting and not self.task_holding
 
 
-tracing = False
+tracing: Final = False
 layout = 0
 
 
