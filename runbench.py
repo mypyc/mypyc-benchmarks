@@ -149,7 +149,7 @@ def compile_benchmark(module: str, raw_output: bool, mypy_repo: Optional[str]) -
         cmd = [sys.executable, '-m', 'mypyc']
     else:
         cmd = [sys.executable, legacy_script]
-    subprocess.run(cmd + [fnam], check=True)
+    subprocess.run(cmd + [fnam], check=True, env=env)
     pattern = module.replace('.', '/') + f'.*.{BINARY_EXTENSION}'
     paths = glob.glob(pattern)
     assert len(paths) == 1
