@@ -51,31 +51,24 @@ class Done(object):
     MAX_NEIGHBORS_STRATEGY: Final = 4
     MIN_NEIGHBORS_STRATEGY: Final = 5
 
-    def __init__(self, count: int, empty: bool = False) -> None:
+    def __init__(self, count: int, cells: Optional[List[List[int]]] = None) -> None:
         self.count = count
-        self.cells = None if empty else [
+        self.cells = cells if cells is not None else [
             [0, 1, 2, 3, 4, 5, 6, EMPTY] for i in xrange(count)]
 
     def clone(self) -> 'Done':
-        ret = Done(self.count, True)
-        assert self.cells is not None
-        ret.cells = [self.cells[i][:] for i in xrange(self.count)]
-        return ret
+        return Done(self.count, [self.cells[i][:] for i in xrange(self.count)])
 
     def __getitem__(self, i: int) -> List[int]:
-        assert self.cells is not None
         return self.cells[i]
 
     def set_done(self, i: int, v: int) -> None:
-        assert self.cells is not None
         self.cells[i] = [v]
 
     def already_done(self, i: int) -> bool:
-        assert self.cells is not None
         return len(self.cells[i]) == 1
 
     def remove(self, i: int, v: int) -> bool:
-        assert self.cells is not None
         if v in self.cells[i]:
             self.cells[i].remove(v)
             return True
@@ -102,7 +95,6 @@ class Done(object):
     def next_cell_min_choice(self) -> int:
         minlen = 10
         mini = -1
-        assert self.cells is not None
         for i in xrange(self.count):
             if 1 < len(self.cells[i]) < minlen:
                 minlen = len(self.cells[i])
@@ -112,7 +104,6 @@ class Done(object):
     def next_cell_max_choice(self) -> int:
         maxlen = 1
         maxi = -1
-        assert self.cells is not None
         for i in xrange(self.count):
             if maxlen < len(self.cells[i]):
                 maxlen = len(self.cells[i])
@@ -122,7 +113,6 @@ class Done(object):
     def next_cell_highest_value(self) -> int:
         maxval = -1
         maxi = -1
-        assert self.cells is not None
         for i in xrange(self.count):
             if (not self.already_done(i)):
                 maxvali = max(k for k in self.cells[i] if k != EMPTY)
