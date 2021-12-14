@@ -76,6 +76,63 @@ def str_format() -> None:
 
 
 @benchmark
+def str_format_percent_operator() -> None:
+    a = []
+    tmp_str = "Foobar"
+    for i in range(1000):
+        for _ in range(5):
+            a.append('%s' % tmp_str)
+        a.append('%s-%d' % (tmp_str, i))
+        a.append('%d %f str' % (i, i * 2.0))
+
+    n = 0
+    for i in range(100):
+        for s in a:
+            n += len("foobar %s stuff" % s)
+            ss = "foobar %s stuff" % s
+            n += len("%d-%s-%s" % (i, s, ss))
+    assert n == 38397500, n
+
+
+@benchmark
+def str_format_format_method() -> None:
+    a = []
+    tmp_str = "Foobar"
+    for i in range(1000):
+        for _ in range(5):
+            a.append('{}'.format(tmp_str))
+        a.append('{}-{}'.format(tmp_str, i))
+        a.append('{} {} str'.format(i, i * 2.0))
+
+    n = 0
+    for i in range(100):
+        for s in a:
+            n += len("foobar {} stuff".format(s))
+            ss = "foobar {} stuff".format(s)
+            n += len("{}-{}-{}".format(i, s, ss))
+    assert n == 36897500, n
+
+
+@benchmark
+def str_format_fstring() -> None:
+    a = []
+    tmp_str = "Foobar"
+    for i in range(1000):
+        for _ in range(5):
+            a.append(f'{tmp_str}')
+        a.append(f'{tmp_str}-{i}')
+        a.append(f'{i} {i*2.0} str')
+
+    n = 0
+    for i in range(100):
+        for s in a:
+            n += len(f"foobar {s} stuff")
+            ss = f"foobar {s} stuff"
+            n += len(f"{i}-{s}-{ss}")
+    assert n == 36897500, n
+
+
+@benchmark
 def str_slicing() -> None:
     a = []
     for i in range(1000):
