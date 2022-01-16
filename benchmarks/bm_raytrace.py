@@ -11,7 +11,9 @@ From http://www.lshift.net/blog/2008/10/29/toy-raytracer-in-python
 import array
 import math
 
-import pyperf
+from typing_extensions import Final
+
+from benchmarking import benchmark
 
 
 DEFAULT_WIDTH = 100
@@ -84,13 +86,13 @@ class Vector(object):
         return self - d.scale(2)
 
 
-Vector.ZERO = Vector(0, 0, 0)
-Vector.RIGHT = Vector(1, 0, 0)
-Vector.UP = Vector(0, 1, 0)
-Vector.OUT = Vector(0, 0, 1)
+Vector_ZERO: Final = Vector(0, 0, 0)
+Vector_RIGHT: Final = Vector(1, 0, 0)
+Vector_UP: Final = Vector(0, 1, 0)
+Vector_OUT: Final = Vector(0, 0, 1)
 
-assert Vector.RIGHT.reflectThrough(Vector.UP) == Vector.RIGHT
-assert Vector(-1, -1, 0).reflectThrough(Vector.UP) == Vector(-1, 1, 0)
+assert Vector_RIGHT.reflectThrough(Vector_UP) == Vector_RIGHT
+assert Vector(-1, -1, 0).reflectThrough(Vector_UP) == Vector(-1, 1, 0)
 
 
 class Point(object):
@@ -185,7 +187,7 @@ class Ray(object):
         return self.point + self.vector.scale(t)
 
 
-Point.ZERO = Point(0, 0, 0)
+Point_ZERO: Final = Point(0, 0, 0)
 
 
 class Canvas(object):
@@ -226,7 +228,7 @@ class Scene(object):
         self.objects = []
         self.lightPoints = []
         self.position = Point(0, 1.8, 10)
-        self.lookingAt = Point.ZERO
+        self.lookingAt = Point_ZERO
         self.fieldOfView = 45
         self.recursionDepth = 0
 
@@ -252,7 +254,7 @@ class Scene(object):
         pixelHeight = height / (canvas.height - 1)
 
         eye = Ray(self.position, self.lookingAt - self.position)
-        vpRight = eye.vector.cross(Vector.UP).normalized()
+        vpRight = eye.vector.cross(Vector_UP).normalized()
         vpUp = vpRight.cross(eye.vector).normalized()
 
         for y in range(canvas.height):
@@ -344,7 +346,7 @@ class CheckerboardSurface(SimpleSurface):
         self.checkSize = kwargs.get('checkSize', 1)
 
     def baseColourAt(self, p):
-        v = p - Point.ZERO
+        v = p - Point_ZERO
         v.scale(1.0 / self.checkSize)
         if ((int(abs(v.x) + 0.5)
              + int(abs(v.y) + 0.5)
@@ -356,7 +358,6 @@ class CheckerboardSurface(SimpleSurface):
 
 def bench_raytrace(loops, width, height, filename):
     range_it = range(loops)
-    t0 = pyperf.perf_counter()
 
     for i in range_it:
         canvas = Canvas(width, height)
@@ -369,41 +370,14 @@ def bench_raytrace(loops, width, height, filename):
         for y in range(6):
             s.addObject(Sphere(Point(-3 - y * 0.4, 2.3, -5), 0.4),
                         SimpleSurface(baseColour=(y / 6.0, 1 - y / 6.0, 0.5)))
-        s.addObject(Halfspace(Point(0, 0, 0), Vector.UP),
+        s.addObject(Halfspace(Point(0, 0, 0), Vector_UP),
                     CheckerboardSurface())
         s.render(canvas)
 
-    dt = pyperf.perf_counter() - t0
-
     if filename:
         canvas.write_ppm(filename)
-    return dt
 
 
-def add_cmdline_args(cmd, args):
-    cmd.append("--width=%s" % args.width)
-    cmd.append("--height=%s" % args.height)
-    if args.filename:
-        cmd.extend(("--filename", args.filename))
-
-
-if __name__ == "__main__":
-    runner = pyperf.Runner(add_cmdline_args=add_cmdline_args)
-    cmd = runner.argparser
-    cmd.add_argument("--width",
-                     type=int, default=DEFAULT_WIDTH,
-                     help="Image width (default: %s)" % DEFAULT_WIDTH)
-    cmd.add_argument("--height",
-                     type=int, default=DEFAULT_HEIGHT,
-                     help="Image height (default: %s)" % DEFAULT_HEIGHT)
-    cmd.add_argument("--filename", metavar="FILENAME.PPM",
-                     help="Output filename of the PPM picture")
-
-    args = runner.parse_args()
-    runner.metadata['description'] = "Simple raytracer"
-    runner.metadata['raytrace_width'] = args.width
-    runner.metadata['raytrace_height'] = args.height
-
-    runner.bench_time_func('raytrace', bench_raytrace,
-                           args.width, args.height,
-                           args.filename)
+@benchmark
+def raytrace() -> None:
+    bench_raytrace(1, DEFAULT_WIDTH, DEFAULT_HEIGHT, None)
