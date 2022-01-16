@@ -1,3 +1,5 @@
+# mypy: disallow-untyped-defs
+
 """
 This file contains definitions for a simple raytracer.
 Copyright Callum and Tony Garnock-Jones, 2008.
@@ -11,7 +13,7 @@ From http://www.lshift.net/blog/2008/10/29/toy-raytracer-in-python
 import array
 import math
 
-from typing import Optional, Union, overload
+from typing import List, Tuple, Optional, Union, overload
 from typing_extensions import Final
 
 from benchmarking import benchmark
@@ -22,7 +24,7 @@ DEFAULT_HEIGHT = 100
 EPSILON = 0.00001
 
 
-class Vector(object):
+class Vector:
 
     def __init__(self, initx: float, inity: float, initz: float) -> None:
         self.x = initx
@@ -71,7 +73,9 @@ class Vector(object):
     def negated(self) -> 'Vector':
         return self.scale(-1)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Vector):
+            return False
         return (self.x == other.x) and (self.y == other.y) and (self.z == other.z)
 
     def isVector(self) -> bool:
@@ -100,7 +104,7 @@ assert Vector_RIGHT.reflectThrough(Vector_UP) == Vector_RIGHT
 assert Vector(-1, -1, 0).reflectThrough(Vector_UP) == Vector(-1, 1, 0)
 
 
-class Point(object):
+class Point:
 
     def __init__(self, initx: float, inity: float, initz: float) -> None:
         self.x = initx
@@ -140,7 +144,15 @@ class Point(object):
         return self
 
 
-class Sphere(object):
+class Object:
+    def intersectionTime(self, ray: 'Ray') -> Optional[float]:
+        raise NotImplementedError
+
+    def normalAt(self, p: Point) -> Vector:
+        raise NotImplementedError
+
+
+class Sphere(Object):
 
     def __init__(self, centre: Point, radius: float) -> None:
         centre.mustBePoint()
@@ -163,7 +175,7 @@ class Sphere(object):
         return (p - self.centre).normalized()
 
 
-class Halfspace(object):
+class Halfspace(Object):
 
     def __init__(self, point: Point, normal: Vector) -> None:
         self.point = point
@@ -183,7 +195,7 @@ class Halfspace(object):
         return self.normal
 
 
-class Ray(object):
+class Ray:
 
     def __init__(self, point: Point, vector: Vector) -> None:
         self.point = point
@@ -199,7 +211,7 @@ class Ray(object):
 Point_ZERO: Final = Point(0, 0, 0)
 
 
-class Canvas(object):
+class Canvas:
 
     def __init__(self, width: int, height: int) -> None:
         self.bytes = array.array('B', [0] * (width * height * 3))
@@ -221,39 +233,44 @@ class Canvas(object):
             fp.write(self.bytes.tobytes())
 
 
-def firstIntersection(intersections):
-    result = None
+def firstIntersection(
+    intersections: List[Tuple[Object, Optional[float], 'Surface']]
+) -> Optional[Tuple[Object, float, 'Surface']]:
+    result: Optional[Tuple[Object, float, Surface]] = None
     for i in intersections:
         candidateT = i[1]
         if candidateT is not None and candidateT > -EPSILON:
             if result is None or candidateT < result[1]:
-                result = i
+                result = (i[0], candidateT, i[2])
     return result
 
 
-class Scene(object):
+Colour = Tuple[float, float, float]
 
-    def __init__(self):
-        self.objects = []
-        self.lightPoints = []
+
+class Scene:
+
+    def __init__(self) -> None:
+        self.objects: List[Tuple[Object, Surface]] = []
+        self.lightPoints: List[Point] = []
         self.position = Point(0, 1.8, 10)
         self.lookingAt = Point_ZERO
         self.fieldOfView = 45
         self.recursionDepth = 0
 
-    def moveTo(self, p):
+    def moveTo(self, p: Point) -> None:
         self.position = p
 
-    def lookAt(self, p):
+    def lookAt(self, p: Point) -> None:
         self.lookingAt = p
 
-    def addObject(self, object, surface):
+    def addObject(self, object: Object, surface: 'Surface') -> None:
         self.objects.append((object, surface))
 
-    def addLight(self, p):
+    def addLight(self, p: Point) -> None:
         self.lightPoints.append(p)
 
-    def render(self, canvas):
+    def render(self, canvas: Canvas) -> None:
         fovRadians = math.pi * (self.fieldOfView / 2.0) / 180.0
         halfWidth = math.tan(fovRadians)
         halfHeight = 0.75 * halfWidth
@@ -274,7 +291,7 @@ class Scene(object):
                 colour = self.rayColour(ray)
                 canvas.plot(x, y, *colour)
 
-    def rayColour(self, ray):
+    def rayColour(self, ray: Ray) -> Colour:
         if self.recursionDepth > 3:
             return (0, 0, 0)
         try:
@@ -291,14 +308,14 @@ class Scene(object):
         finally:
             self.recursionDepth = self.recursionDepth - 1
 
-    def _lightIsVisible(self, l, p):
+    def _lightIsVisible(self, l: Point, p: Point) -> bool:
         for (o, s) in self.objects:
             t = o.intersectionTime(Ray(p, l - p))
             if t is not None and t > EPSILON:
                 return False
         return True
 
-    def visibleLights(self, p):
+    def visibleLights(self, p: Point) -> List[Point]:
         result = []
         for l in self.lightPoints:
             if self._lightIsVisible(l, p):
@@ -306,34 +323,43 @@ class Scene(object):
         return result
 
 
-def addColours(a, scale, b):
+def addColours(a: Colour, scale: float, b: Colour) -> Colour:
     return (a[0] + scale * b[0],
             a[1] + scale * b[1],
             a[2] + scale * b[2])
 
 
-class SimpleSurface(object):
+class Surface:
+    def colourAt(self, scene: Scene, ray: Ray, p: Point, normal: Vector) -> Colour:
+        raise NotImplementedError
 
-    def __init__(self, **kwargs):
-        self.baseColour = kwargs.get('baseColour', (1, 1, 1))
-        self.specularCoefficient = kwargs.get('specularCoefficient', 0.2)
-        self.lambertCoefficient = kwargs.get('lambertCoefficient', 0.6)
+
+class SimpleSurface(Surface):
+
+    def __init__(self,
+                 *,
+                 baseColour: Colour = (1, 1, 1),
+                 specularCoefficient: float = 0.2,
+                 lambertCoefficient: float = 0.6) -> None:
+        self.baseColour = baseColour
+        self.specularCoefficient = specularCoefficient
+        self.lambertCoefficient = lambertCoefficient
         self.ambientCoefficient = 1.0 - self.specularCoefficient - self.lambertCoefficient
 
-    def baseColourAt(self, p):
+    def baseColourAt(self, p: Point) -> Colour:
         return self.baseColour
 
-    def colourAt(self, scene, ray, p, normal):
+    def colourAt(self, scene: Scene, ray: Ray, p: Point, normal: Vector) -> Colour:
         b = self.baseColourAt(p)
 
-        c = (0, 0, 0)
+        c: Colour = (0, 0, 0)
         if self.specularCoefficient > 0:
             reflectedRay = Ray(p, ray.vector.reflectThrough(normal))
             reflectedColour = scene.rayColour(reflectedRay)
             c = addColours(c, self.specularCoefficient, reflectedColour)
 
         if self.lambertCoefficient > 0:
-            lambertAmount = 0
+            lambertAmount: float = 0
             for lightPoint in scene.visibleLights(p):
                 contribution = (lightPoint - p).normalized().dot(normal)
                 if contribution > 0:
@@ -349,12 +375,20 @@ class SimpleSurface(object):
 
 class CheckerboardSurface(SimpleSurface):
 
-    def __init__(self, **kwargs):
-        SimpleSurface.__init__(self, **kwargs)
-        self.otherColour = kwargs.get('otherColour', (0, 0, 0))
-        self.checkSize = kwargs.get('checkSize', 1)
+    def __init__(self,
+                 *,
+                 baseColour: Colour = (1, 1, 1),
+                 specularCoefficient: float = 0.2,
+                 lambertCoefficient: float = 0.6,
+                 otherColor: Colour = (0, 0, 0),
+                 checkSize: float = 1) -> None:
+        super().__init__(baseColour=baseColour,
+                         specularCoefficient=specularCoefficient,
+                         lambertCoefficient=lambertCoefficient)
+        self.otherColour = otherColor
+        self.checkSize = checkSize
 
-    def baseColourAt(self, p):
+    def baseColourAt(self, p: Point) -> Colour:
         v = p - Point_ZERO
         v.scale(1.0 / self.checkSize)
         if ((int(abs(v.x) + 0.5)
