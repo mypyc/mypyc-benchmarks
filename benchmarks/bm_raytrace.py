@@ -11,6 +11,7 @@ From http://www.lshift.net/blog/2008/10/29/toy-raytracer-in-python
 import array
 import math
 
+from typing import Optional, Union, overload
 from typing_extensions import Final
 
 from benchmarking import benchmark
@@ -23,65 +24,69 @@ EPSILON = 0.00001
 
 class Vector(object):
 
-    def __init__(self, initx, inity, initz):
+    def __init__(self, initx: float, inity: float, initz: float) -> None:
         self.x = initx
         self.y = inity
         self.z = initz
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '(%s,%s,%s)' % (self.x, self.y, self.z)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Vector(%s,%s,%s)' % (self.x, self.y, self.z)
 
-    def magnitude(self):
+    def magnitude(self) -> float:
         return math.sqrt(self.dot(self))
 
-    def __add__(self, other):
+    @overload
+    def __add__(self, other: 'Vector') -> 'Vector': ...
+    @overload
+    def __add__(self, other: 'Point') -> 'Point': ...
+    def __add__(self, other: Union['Vector', 'Point']) -> Union['Vector', 'Point']:
         if other.isPoint():
             return Point(self.x + other.x, self.y + other.y, self.z + other.z)
         else:
             return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
 
-    def __sub__(self, other):
+    def __sub__(self, other: 'Vector') -> 'Vector':
         other.mustBeVector()
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def scale(self, factor):
+    def scale(self, factor: float) -> 'Vector':
         return Vector(factor * self.x, factor * self.y, factor * self.z)
 
-    def dot(self, other):
+    def dot(self, other: 'Vector') -> float:
         other.mustBeVector()
         return (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
 
-    def cross(self, other):
+    def cross(self, other: 'Vector') -> 'Vector':
         other.mustBeVector()
         return Vector(self.y * other.z - self.z * other.y,
                       self.z * other.x - self.x * other.z,
                       self.x * other.y - self.y * other.x)
 
-    def normalized(self):
+    def normalized(self) -> 'Vector':
         return self.scale(1.0 / self.magnitude())
 
-    def negated(self):
+    def negated(self) -> 'Vector':
         return self.scale(-1)
 
     def __eq__(self, other):
         return (self.x == other.x) and (self.y == other.y) and (self.z == other.z)
 
-    def isVector(self):
+    def isVector(self) -> bool:
         return True
 
-    def isPoint(self):
+    def isPoint(self) -> bool:
         return False
 
-    def mustBeVector(self):
+    def mustBeVector(self) -> 'Vector':
         return self
 
-    def mustBePoint(self):
-        raise 'Vectors are not points!'
+    def mustBePoint(self) -> None:
+        raise TypeError('Vectors are not points!')
 
-    def reflectThrough(self, normal):
+    def reflectThrough(self, normal: 'Vector') -> 'Vector':
         d = normal.scale(self.dot(normal))
         return self - d.scale(2)
 
@@ -97,51 +102,55 @@ assert Vector(-1, -1, 0).reflectThrough(Vector_UP) == Vector(-1, 1, 0)
 
 class Point(object):
 
-    def __init__(self, initx, inity, initz):
+    def __init__(self, initx: float, inity: float, initz: float) -> None:
         self.x = initx
         self.y = inity
         self.z = initz
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '(%s,%s,%s)' % (self.x, self.y, self.z)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Point(%s,%s,%s)' % (self.x, self.y, self.z)
 
-    def __add__(self, other):
+    def __add__(self, other: Vector) -> 'Point':
         other.mustBeVector()
         return Point(self.x + other.x, self.y + other.y, self.z + other.z)
 
-    def __sub__(self, other):
+    @overload
+    def __sub__(self, other: Vector) -> 'Point': ...
+    @overload
+    def __sub__(self, other: 'Point') -> Vector: ...
+    def __sub__(self, other: Union['Point', Vector]) -> Union['Point', Vector]:
         if other.isPoint():
             return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
         else:
             return Point(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def isVector(self):
+    def isVector(self) -> bool:
         return False
 
-    def isPoint(self):
+    def isPoint(self) -> bool:
         return True
 
-    def mustBeVector(self):
-        raise 'Points are not vectors!'
+    def mustBeVector(self) -> None:
+        raise TypeError('Points are not vectors!')
 
-    def mustBePoint(self):
+    def mustBePoint(self) -> 'Point':
         return self
 
 
 class Sphere(object):
 
-    def __init__(self, centre, radius):
+    def __init__(self, centre: Point, radius: float) -> None:
         centre.mustBePoint()
         self.centre = centre
         self.radius = radius
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Sphere(%s,%s)' % (repr(self.centre), self.radius)
 
-    def intersectionTime(self, ray):
+    def intersectionTime(self, ray: 'Ray') -> Optional[float]:
         cp = self.centre - ray.point
         v = cp.dot(ray.vector)
         discriminant = (self.radius * self.radius) - (cp.dot(cp) - v * v)
@@ -150,40 +159,40 @@ class Sphere(object):
         else:
             return v - math.sqrt(discriminant)
 
-    def normalAt(self, p):
+    def normalAt(self, p: Point) -> Vector:
         return (p - self.centre).normalized()
 
 
 class Halfspace(object):
 
-    def __init__(self, point, normal):
+    def __init__(self, point: Point, normal: Vector) -> None:
         self.point = point
         self.normal = normal.normalized()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Halfspace(%s,%s)' % (repr(self.point), repr(self.normal))
 
-    def intersectionTime(self, ray):
+    def intersectionTime(self, ray: 'Ray') -> Optional[float]:
         v = ray.vector.dot(self.normal)
         if v:
             return 1 / -v
         else:
             return None
 
-    def normalAt(self, p):
+    def normalAt(self, p: Point) -> Vector:
         return self.normal
 
 
 class Ray(object):
 
-    def __init__(self, point, vector):
+    def __init__(self, point: Point, vector: Vector) -> None:
         self.point = point
         self.vector = vector.normalized()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Ray(%s,%s)' % (repr(self.point), repr(self.vector))
 
-    def pointAtTime(self, t):
+    def pointAtTime(self, t: float) -> Point:
         return self.point + self.vector.scale(t)
 
 
@@ -192,24 +201,24 @@ Point_ZERO: Final = Point(0, 0, 0)
 
 class Canvas(object):
 
-    def __init__(self, width, height):
+    def __init__(self, width: int, height: int) -> None:
         self.bytes = array.array('B', [0] * (width * height * 3))
         for i in range(width * height):
             self.bytes[i * 3 + 2] = 255
         self.width = width
         self.height = height
 
-    def plot(self, x, y, r, g, b):
+    def plot(self, x: int, y: int, r: float, g: float, b: float) -> None:
         i = ((self.height - y - 1) * self.width + x) * 3
         self.bytes[i] = max(0, min(255, int(r * 255)))
         self.bytes[i + 1] = max(0, min(255, int(g * 255)))
         self.bytes[i + 2] = max(0, min(255, int(b * 255)))
 
-    def write_ppm(self, filename):
+    def write_ppm(self, filename: str) -> None:
         header = 'P6 %d %d 255\n' % (self.width, self.height)
         with open(filename, "wb") as fp:
             fp.write(header.encode('ascii'))
-            fp.write(self.bytes.tostring())
+            fp.write(self.bytes.tobytes())
 
 
 def firstIntersection(intersections):
@@ -356,7 +365,7 @@ class CheckerboardSurface(SimpleSurface):
             return self.baseColour
 
 
-def bench_raytrace(loops, width, height, filename):
+def bench_raytrace(loops: int, width: int, height: int, filename: Optional[str]) -> None:
     range_it = range(loops)
 
     for i in range_it:
