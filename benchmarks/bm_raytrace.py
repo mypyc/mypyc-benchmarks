@@ -19,9 +19,9 @@ from typing_extensions import Final
 from benchmarking import benchmark
 
 
-DEFAULT_WIDTH = 100
-DEFAULT_HEIGHT = 100
-EPSILON = 0.00001
+DEFAULT_WIDTH: Final = 100
+DEFAULT_HEIGHT: Final = 100
+EPSILON: Final = 0.00001
 
 
 class Vector:
@@ -126,7 +126,7 @@ class Point:
     @overload
     def __sub__(self, other: 'Point') -> Vector: ...
     def __sub__(self, other: Union['Point', Vector]) -> Union['Point', Vector]:
-        if other.isPoint():
+        if isinstance(other, Point):
             return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
         else:
             return Point(self.x - other.x, self.y - other.y, self.z - other.z)
@@ -255,7 +255,7 @@ class Scene:
         self.lightPoints: List[Point] = []
         self.position = Point(0, 1.8, 10)
         self.lookingAt = Point_ZERO
-        self.fieldOfView = 45
+        self.fieldOfView: float = 45
         self.recursionDepth = 0
 
     def moveTo(self, p: Point) -> None:
