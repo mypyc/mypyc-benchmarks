@@ -29,12 +29,14 @@ def gen_summary_data(benchmarks: List[str],
         three_months_ago = datetime.utcnow() - timedelta(days=30 * 3)
         old_item = find_item_at_time(runs[benchmark], three_months_ago, commit_times)
         old_baseline = find_baseline(baselines[benchmark], old_item)
-        relative_perf = ((new_baseline.runtime / newest_item.runtime) /
-                         (old_baseline.runtime / old_item.runtime))
-        percentage_3m = 100.0 * (relative_perf - 1.0)
         delta_3m = ''
-        if is_significant_percent_change(benchmark, percentage_3m, benchmark in microbenchmarks):
-            delta_3m = '%+.1f%%' % percentage_3m
+        if newest_item.runtime != 0.0 and old_item.runtime != 0.0:
+            relative_perf = ((new_baseline.runtime / newest_item.runtime) /
+                             (old_baseline.runtime / old_item.runtime))
+            percentage_3m = 100.0 * (relative_perf - 1.0)
+            if is_significant_percent_change(benchmark, percentage_3m,
+                                             benchmark in microbenchmarks):
+                delta_3m = '%+.1f%%' % percentage_3m
         summary_item = SummaryItem(
             benchmark=benchmark,
             relative_perf=new_baseline.runtime / newest_item.runtime,
