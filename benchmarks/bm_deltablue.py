@@ -669,7 +669,7 @@ def run_delta_blue(n: int) -> None:
     projection_test(n)
 
 
-@benchmark
+@benchmark()
 def deltablue() -> None:
     n = 100
     for i in range(10):

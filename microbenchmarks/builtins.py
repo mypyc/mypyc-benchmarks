@@ -3,7 +3,7 @@
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def min_max_pair() -> None:
     a = []
     for i in range(20):
@@ -24,7 +24,7 @@ def min_max_pair() -> None:
         assert m == expected_max
 
 
-@benchmark
+@benchmark()
 def min_max_sequence() -> None:
     a = []
     for i in range(1000):
@@ -42,7 +42,7 @@ def min_max_sequence() -> None:
     assert n == 399800000, n
 
 
-@benchmark
+@benchmark()
 def map_builtin() -> None:
     a = []
     for j in range(100):

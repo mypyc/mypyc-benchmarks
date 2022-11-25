@@ -1,7 +1,7 @@
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def str_methods() -> None:
     """Use a mix of popular str methods (but not split/join)."""
     a = []
@@ -27,7 +27,7 @@ def str_methods() -> None:
     assert n == 400000, n
 
 
-@benchmark
+@benchmark()
 def str_methods_2() -> None:
     """Use a mix of popular str methods."""
     a = []
@@ -59,7 +59,7 @@ def str_methods_2() -> None:
     assert n == 593300, n
 
 
-@benchmark
+@benchmark()
 def str_format() -> None:
     a = []
     for i in range(1000):
@@ -75,7 +75,7 @@ def str_format() -> None:
     assert n == 10434000, n
 
 
-@benchmark
+@benchmark()
 def str_slicing() -> None:
     a = []
     for i in range(1000):
@@ -93,7 +93,7 @@ def str_slicing() -> None:
     assert n == 9789000, n
 
 
-@benchmark
+@benchmark()
 def split_and_join() -> None:
     a = []
     for i in range(1000):
@@ -109,7 +109,7 @@ def split_and_join() -> None:
     assert n == 300000, n
 
 
-@benchmark
+@benchmark()
 def encode_decode() -> None:
     a = []
     for i in range(1000):
@@ -129,7 +129,7 @@ def encode_decode() -> None:
     assert n == 300000, n
 
 
-@benchmark
+@benchmark()
 def str_searching() -> None:
     a = []
     for i in range(1000):
@@ -147,7 +147,7 @@ def str_searching() -> None:
     assert n == 1089000, n
 
 
-@benchmark
+@benchmark()
 def str_call() -> None:
     a = []
     for i in range(100):
@@ -171,7 +171,7 @@ class Cls:
         return str(self.x)
 
 
-@benchmark
+@benchmark()
 def ord_builtin() -> None:
     a = []
     for i in range(1000):

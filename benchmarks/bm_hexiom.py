@@ -652,6 +652,6 @@ def main(loops: int, level: int) -> None:
                              % (output, expected))
 
 
-@benchmark
+@benchmark()
 def hexiom() -> None:
     main(10, DEFAULT_LEVEL)  # Second argument: an item of LEVELS

@@ -71,6 +71,6 @@ def bench_spectral_norm(loops: int) -> float:
     return time.time() - t0
 
 
-@benchmark
+@benchmark()
 def spectral_norm() -> None:
     bench_spectral_norm(3)

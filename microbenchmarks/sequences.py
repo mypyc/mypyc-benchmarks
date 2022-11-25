@@ -5,7 +5,7 @@ from typing import List, Tuple
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def list_slicing() -> None:
     a = []
     for i in range(1000):
@@ -27,7 +27,7 @@ def list_slicing() -> None:
     assert n == 700100, n
 
 
-@benchmark
+@benchmark()
 def tuple_slicing() -> None:
     a = []  # type: List[Tuple[int, ...]]
     for i in range(1000):
@@ -49,7 +49,7 @@ def tuple_slicing() -> None:
     assert n == 700100, n
 
 
-@benchmark
+@benchmark()
 def in_list() -> None:
     a = []
     for j in range(100):
@@ -69,7 +69,7 @@ def in_list() -> None:
     assert n == 412000, n
 
 
-@benchmark
+@benchmark()
 def in_tuple() -> None:
     a = []  # type: List[Tuple[int, ...]]
     for j in range(100):
@@ -89,7 +89,7 @@ def in_tuple() -> None:
     assert n == 412000, n
 
 
-@benchmark
+@benchmark()
 def list_append_small() -> None:
     n = 0
     for i in range(200 * 1000):
@@ -100,7 +100,7 @@ def list_append_small() -> None:
     assert n == 900000, n
 
 
-@benchmark
+@benchmark()
 def list_append_large() -> None:
     n = 0
     for i in range(2000):
@@ -111,7 +111,7 @@ def list_append_large() -> None:
     assert n == 1999000, n
 
 
-@benchmark
+@benchmark()
 def list_from_tuple() -> None:
     a = []  # type: List[Tuple[int, ...]]
     for j in range(100):
@@ -129,7 +129,7 @@ def list_from_tuple() -> None:
     assert n == 9000000, n
 
 
-@benchmark
+@benchmark()
 def list_from_range() -> None:
     a = []
     for j in range(100):
@@ -144,7 +144,7 @@ def list_from_range() -> None:
     assert n == 8800000, n
 
 
-@benchmark
+@benchmark()
 def tuple_from_iterable() -> None:
     a = []
     for i in range(100):
@@ -162,7 +162,7 @@ def tuple_from_iterable() -> None:
     assert n == 1800000, n
 
 
-@benchmark
+@benchmark()
 def list_copy() -> None:
     a = []
     for i in range(100):
@@ -178,7 +178,7 @@ def list_copy() -> None:
             assert s2 == s3
 
 
-@benchmark
+@benchmark()
 def list_remove() -> None:
     for j in range(10 * 1000):
         a = []
@@ -193,7 +193,7 @@ def list_remove() -> None:
         assert total == 55, total
 
 
-@benchmark
+@benchmark()
 def list_insert() -> None:
     for j in range(10 * 1000):
         a: List[int] = []
@@ -205,7 +205,7 @@ def list_insert() -> None:
         assert len(a) == 15
 
 
-@benchmark
+@benchmark()
 def list_index() -> None:
     a = []
     for i in range(100):
@@ -221,7 +221,7 @@ def list_index() -> None:
     assert n == 693000, n
 
 
-@benchmark
+@benchmark()
 def list_add_in_place() -> None:
     for i in range(100 * 1000):
         a: List[int] = []
@@ -233,7 +233,7 @@ def list_add_in_place() -> None:
         assert id(a) == n
 
 
-@benchmark
+@benchmark()
 def list_concatenate() -> None:
     flag = False
     x = ["x", "y", "z"]
@@ -250,7 +250,7 @@ def list_concatenate() -> None:
     assert n == 8500000, n
 
 
-@benchmark
+@benchmark()
 def list_equality() -> None:
     a = [1, 2]
     n = 0
@@ -263,7 +263,7 @@ def list_equality() -> None:
     assert n == 10100, n
 
 
-@benchmark
+@benchmark()
 def tuple_equality() -> None:
     t = (1, 2)
     n = 0
@@ -281,7 +281,7 @@ def tuple_equality() -> None:
     assert n == 10200, n
 
 
-@benchmark
+@benchmark()
 def list_comprehension() -> None:
     a = [1, 2, 4, 6, 8, 13, 17]
     n = 0
@@ -292,7 +292,7 @@ def list_comprehension() -> None:
     assert n == 8200000, n
 
 
-@benchmark
+@benchmark()
 def multiple_assignment() -> None:
     x = 0
     y = 1
@@ -306,7 +306,7 @@ def multiple_assignment() -> None:
     assert n == 3000000, n
 
 
-@benchmark
+@benchmark()
 def list_for_reversed() -> None:
     a = []
     for i in range(1000):
@@ -322,7 +322,7 @@ def list_for_reversed() -> None:
     assert n == 799400000, n
 
 
-@benchmark
+@benchmark()
 def sieve() -> None:
     n = 0
     for i in range(1000):
@@ -346,7 +346,7 @@ def num_primes(n: int) -> int:
     return count
 
 
-@benchmark
+@benchmark()
 def sorted_with_key():
     n = 10
     a = []

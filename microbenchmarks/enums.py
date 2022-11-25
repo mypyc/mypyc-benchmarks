@@ -8,7 +8,7 @@ class MyEnum(Enum):
     C = 3
 
 
-@benchmark
+@benchmark()
 def enums() -> None:
     a = [MyEnum.A, MyEnum.B, MyEnum.C] * 10
     n = 0

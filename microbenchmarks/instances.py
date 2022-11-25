@@ -1,7 +1,7 @@
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def super_method() -> None:
     n = 0
     for i in range(10 * 1000):
@@ -32,7 +32,7 @@ class Cls(Base):
         return x + 1
 
 
-@benchmark
+@benchmark()
 def super_method_alt() -> None:
     n = 0
     for i in range(10 * 1000):

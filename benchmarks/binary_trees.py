@@ -26,7 +26,7 @@ class Tree:
             return 1
 
 
-@benchmark
+@benchmark()
 def binary_trees() -> None:
     # If unadjusted, most time will be spent doing GC.
     gc.set_threshold(10000)

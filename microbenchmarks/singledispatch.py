@@ -41,7 +41,7 @@ def build(n: int) -> Tree:
     return Node(n, build(n - 1), build(n - 1))
 
 
-@benchmark
+@benchmark()
 def sum_tree_singledispatch():
     # making the tree too big causes building the tree to take too long or just crash python entirely
     tree = build(10)

@@ -7,7 +7,7 @@ NT1 = NamedTuple('NT1', [('n', int), ('l', List[str])])
 NT2 = namedtuple('NT2', ['n', 'l', 'b'])
 
 
-@benchmark
+@benchmark()
 def create_namedtuple() -> None:
     N1 = 20
     N2 = 10
@@ -23,7 +23,7 @@ def create_namedtuple() -> None:
             b[n] = NT2(n, l, False)
 
 
-@benchmark
+@benchmark()
 def unpack_namedtuple() -> None:
     N1 = 30
     N2 = 10
@@ -46,7 +46,7 @@ def unpack_namedtuple() -> None:
     assert c == 52000000, c
 
 
-@benchmark
+@benchmark()
 def get_namedtuple_item() -> None:
     N1 = 30
     N2 = 10

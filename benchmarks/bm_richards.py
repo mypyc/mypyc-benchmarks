@@ -424,7 +424,7 @@ class Richards(object):
         return True
 
 
-@benchmark
+@benchmark()
 def richards() -> None:
     richards = Richards()
     for i in range(3):

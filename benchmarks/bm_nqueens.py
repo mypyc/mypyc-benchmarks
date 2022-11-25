@@ -57,7 +57,7 @@ def bench_n_queens(queen_count: int) -> None:
     list(do_n_queens(queen_count))
 
 
-@benchmark
+@benchmark()
 def nqueens() -> None:
     queen_count = 8
     for i in range(3):

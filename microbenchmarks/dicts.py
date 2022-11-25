@@ -3,7 +3,7 @@ from typing import List, Dict
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def dict_iteration() -> None:
     a = []
     for j in range(1000):
@@ -31,7 +31,7 @@ def dict_iteration() -> None:
     assert n == 202000, n
 
 
-@benchmark
+@benchmark()
 def dict_to_list() -> None:
     a = []
     for j in range(1000):
@@ -51,7 +51,7 @@ def dict_to_list() -> None:
     assert n == 5400000, n
 
 
-@benchmark
+@benchmark()
 def dict_set_default() -> None:
     n = 0
     for i in range(100 * 1000):
@@ -63,7 +63,7 @@ def dict_set_default() -> None:
     assert n == 409095, n
 
 
-@benchmark
+@benchmark()
 def dict_clear() -> None:
     n = 0
     for i in range(1000 * 1000):
@@ -74,7 +74,7 @@ def dict_clear() -> None:
         assert len(d) == 0
 
 
-@benchmark
+@benchmark()
 def dict_copy() -> None:
     a = []
     for j in range(100):
@@ -93,7 +93,7 @@ def dict_copy() -> None:
             assert len(d4) == len(d)
 
 
-@benchmark
+@benchmark()
 def dict_call_keywords() -> None:
     n = 0
     for i in range(1000 * 1000):
@@ -102,7 +102,7 @@ def dict_call_keywords() -> None:
     assert n == 3000000, n
 
 
-@benchmark
+@benchmark()
 def dict_call_generator() -> None:
     a = []
     for j in range(1000):
@@ -121,7 +121,7 @@ def dict_call_generator() -> None:
             assert len(d) == len(s)
 
 
-@benchmark
+@benchmark()
 def dict_del_item() -> None:
     d = {'long_lived': 'value'}
     for j in range(1000 * 1000):

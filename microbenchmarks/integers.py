@@ -1,7 +1,7 @@
 from benchmarking import benchmark, benchmark_with_context, BenchmarkContext
 
 
-@benchmark
+@benchmark()
 def int_bitwise_ops() -> None:
     a = []
     for i in range(1000):

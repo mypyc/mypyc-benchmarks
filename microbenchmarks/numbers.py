@@ -52,7 +52,7 @@ def multiply(a: Matrix, b: Matrix) -> Matrix:
     return result
 
 
-@benchmark
+@benchmark()
 def int_to_float() -> None:
     a = [1, 4, 6, 7, 8, 9]
     x = 0.0
@@ -62,7 +62,7 @@ def int_to_float() -> None:
     assert x == 35000000.0, x
 
 
-@benchmark
+@benchmark()
 def str_to_float() -> None:
     a = ['1', '1.234567', '44324', '23.4', '-43.44e-4']
     x = 0.0
@@ -72,7 +72,7 @@ def str_to_float() -> None:
     assert is_close(x, 44349630223.26009), x
 
 
-@benchmark
+@benchmark()
 def float_abs() -> None:
     a = [1, -1.234567, 44324, 23.4, -43.44e-4]
     x = 0.0
@@ -82,7 +82,7 @@ def float_abs() -> None:
     assert is_close(x, 44349638911.052574), x
 
 
-@benchmark
+@benchmark()
 def int_divmod() -> None:
     a = [1, 1235, 5434, 394879374, -34453]
     n = 0
@@ -93,7 +93,7 @@ def int_divmod() -> None:
     assert n == 17167493000000, n
 
 
-@benchmark
+@benchmark()
 def int_list() -> None:
     a = list(range(200))
     b = list(reversed(a))

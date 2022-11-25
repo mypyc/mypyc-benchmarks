@@ -1,7 +1,7 @@
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def bytes_concat() -> None:
     a = []
     for i in range(1000):
@@ -20,7 +20,7 @@ def bytes_concat() -> None:
     assert n == 2000000, n
 
 
-@benchmark
+@benchmark()
 def bytes_methods() -> None:
     """Use a mix of bytes methods (but not split/join)."""
     a = []
@@ -46,7 +46,7 @@ def bytes_methods() -> None:
     assert n == 400000, n
 
 
-@benchmark
+@benchmark()
 def bytes_format() -> None:
     a = []
     for i in range(1000):
@@ -62,7 +62,7 @@ def bytes_format() -> None:
     assert n == 10434000, n
 
 
-@benchmark
+@benchmark()
 def bytes_slicing() -> None:
     a = []
     for i in range(1000):
@@ -80,7 +80,7 @@ def bytes_slicing() -> None:
     assert n == 9789000, n
 
 
-@benchmark
+@benchmark()
 def bytes_split_and_join() -> None:
     a = []
     for i in range(1000):
@@ -96,7 +96,7 @@ def bytes_split_and_join() -> None:
     assert n == 300000, n
 
 
-@benchmark
+@benchmark()
 def bytes_searching() -> None:
     a = []
     for i in range(1000):
@@ -114,7 +114,7 @@ def bytes_searching() -> None:
     assert n == 1089000, n
 
 
-@benchmark
+@benchmark()
 def bytes_call() -> None:
     a = []
     for i in range(100):
@@ -131,7 +131,7 @@ def bytes_call() -> None:
     assert n == 7000000, n
 
 
-@benchmark
+@benchmark()
 def bytes_indexing() -> None:
     a = []
     for i in range(1000):

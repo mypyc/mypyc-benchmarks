@@ -67,6 +67,12 @@ def run_benchmark(benchmark: BenchmarkInfo,
                   compiled: bool,
                   min_iter: int) -> None:
     assert compiled or interpreted
+
+    if benchmark.prepare:
+        if not raw_output:
+            print('preparing %s' % benchmark.name)
+        benchmark.prepare()
+
     if not raw_output:
         print('running %s' % benchmark.name)
 

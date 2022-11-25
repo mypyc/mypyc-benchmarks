@@ -22,7 +22,7 @@ class C2:
     n: int
 
 
-@benchmark
+@benchmark()
 def create_dataclass() -> None:
     N = 40
     a = [C(1, [], True)] * N
@@ -35,7 +35,7 @@ def create_dataclass() -> None:
             b.append(C2(n=n, l=l))
 
 
-@benchmark
+@benchmark()
 def dataclass_attr_access() -> None:
     N = 40
     a = []
@@ -52,7 +52,7 @@ def dataclass_attr_access() -> None:
     assert c == 80600000, c
 
 
-@benchmark
+@benchmark()
 def dataclass_method() -> None:
     N = 40
     a = []
@@ -72,7 +72,7 @@ class F:
     s: str
 
 
-@benchmark
+@benchmark()
 def dataclass_as_dict_key() -> None:
     d: Dict[F, int] = {}
     a = [F(i % 4, str(i % 3)) for i in range(100)]

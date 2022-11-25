@@ -3,7 +3,7 @@ from typing import Iterator
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def generators() -> None:
     n = 0
     k = 0

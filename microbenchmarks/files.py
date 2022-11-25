@@ -5,7 +5,7 @@ import os
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def read_write_text() -> None:
     a = []
     for i in range(1000):
@@ -28,7 +28,7 @@ def read_write_text() -> None:
             os.remove(fnam)
 
 
-@benchmark
+@benchmark()
 def readline() -> None:
     a = []
     for i in range(1000):
@@ -56,7 +56,7 @@ def readline() -> None:
             os.remove(fnam)
 
 
-@benchmark
+@benchmark()
 def read_write_binary() -> None:
     a = []
     for i in range(1000):
@@ -79,7 +79,7 @@ def read_write_binary() -> None:
             os.remove(fnam)
 
 
-@benchmark
+@benchmark()
 def read_write_binary_chunks() -> None:
     a = []
     for i in range(500):
@@ -115,7 +115,7 @@ def read_write_binary_chunks() -> None:
             os.remove(fnam)
 
 
-@benchmark
+@benchmark()
 def read_write_chars() -> None:
     fnam = '__dummy.txt'
     try:
@@ -139,7 +139,7 @@ def read_write_chars() -> None:
             os.remove(fnam)
 
 
-@benchmark
+@benchmark()
 def read_write_small_files() -> None:
     fnam = '__dummy%d.txt'
     num_files = 10
@@ -158,7 +158,7 @@ def read_write_small_files() -> None:
                 os.remove(fnam % i)
 
 
-@benchmark
+@benchmark()
 def read_write_close() -> None:
     fnam = '__dummy%d.txt'
     num_files = 10

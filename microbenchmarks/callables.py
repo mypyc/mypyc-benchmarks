@@ -3,7 +3,7 @@ from typing import Callable
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def nested_func() -> None:
     n = 0
 
@@ -27,7 +27,7 @@ def call_nested_fast() -> int:
     return n
 
 
-@benchmark
+@benchmark()
 def nested_func_escape() -> None:
     n = 0
 
@@ -51,7 +51,7 @@ def invoke(f: Callable[[int], None]) -> None:
         f(i)
 
 
-@benchmark
+@benchmark()
 def method_object() -> None:
     a = []
     for i in range(5):

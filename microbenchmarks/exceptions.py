@@ -1,7 +1,7 @@
 from benchmarking import benchmark
 
 
-@benchmark
+@benchmark()
 def catch_exceptions() -> None:
     n = 0
     for i in range(100 * 1000):

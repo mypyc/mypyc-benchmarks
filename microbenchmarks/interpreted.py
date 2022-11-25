@@ -17,7 +17,7 @@ def func3(count: int, name: str, thing: object) -> int:
     return count
 
 
-@benchmark
+@benchmark()
 def positional_args_from_interpreted() -> None:
     code = dedent("""\
         def run():
@@ -32,7 +32,7 @@ def positional_args_from_interpreted() -> None:
     exec(code, globals())
 
 
-@benchmark
+@benchmark()
 def keyword_args_from_interpreted() -> None:
     code = dedent("""\
         def run():
@@ -62,7 +62,7 @@ class C:
         return count
 
 
-@benchmark
+@benchmark()
 def call_method_from_interpreted() -> None:
     code = dedent("""\
         def run():
@@ -79,7 +79,7 @@ def call_method_from_interpreted() -> None:
     exec(code, globals())
 
 
-@benchmark
+@benchmark()
 def call_type_from_interpreted() -> None:
     code = dedent("""
         def run():
@@ -93,7 +93,7 @@ def call_type_from_interpreted() -> None:
     exec(code, globals())
 
 
-@benchmark
+@benchmark()
 def access_attr_from_interpreted() -> None:
     code = dedent("""
         def run():
