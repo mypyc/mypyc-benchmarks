@@ -68,7 +68,7 @@ from mypy.traverser import TraverserVisitor
 from mypy.types import CallableType
 from mypy.typestate import TypeState
 
-SavedAttributes: _TypeAlias = Dict[Tuple[ClassDef, str], SymbolTableNode]
+SavedAttributes = Dict[Tuple[ClassDef, str], SymbolTableNode]
 
 
 def strip_target(

@@ -44,7 +44,7 @@ OnePackageDir = Tuple[str, bool]
 PackageDirs = List[OnePackageDir]
 
 # Minimum and maximum Python versions for modules in stdlib as (major, minor)
-StdlibVersions: _TypeAlias = Dict[str, Tuple[Tuple[int, int], Optional[Tuple[int, int]]]]
+StdlibVersions = Dict[str, Tuple[Tuple[int, int], Optional[Tuple[int, int]]]]
 
 PYTHON_EXTENSIONS: Final = [".pyi", ".py"]
 

@@ -313,7 +313,7 @@ ALLOW_INCOMPATIBLE_OVERRIDE: Final = ("__slots__", "__deletable__", "__match_arg
 
 
 # Used for tracking incomplete references
-Tag: _TypeAlias = int
+Tag = int
 
 
 class SemanticAnalyzer(

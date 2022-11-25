@@ -122,7 +122,7 @@ CORE_BUILTIN_MODULES: Final = {
 }
 
 
-Graph: _TypeAlias = Dict[str, "State"]
+Graph = Dict[str, "State"]
 
 
 # TODO: Get rid of BuildResult.  We might as well return a BuildManager.

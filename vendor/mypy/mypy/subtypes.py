@@ -70,7 +70,7 @@ IS_CLASSVAR: Final = 2
 IS_CLASS_OR_STATIC: Final = 3
 IS_VAR: Final = 4
 
-TypeParameterChecker: _TypeAlias = Callable[[Type, Type, int, bool, "SubtypeContext"], bool]
+TypeParameterChecker = Callable[[Type, Type, int, bool, "SubtypeContext"], bool]
 
 
 class SubtypeContext:

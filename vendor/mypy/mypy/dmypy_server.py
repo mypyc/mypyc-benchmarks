@@ -157,9 +157,9 @@ def ignore_suppressed_imports(module: str) -> bool:
     return module.startswith("encodings.")
 
 
-ModulePathPair: _TypeAlias = Tuple[str, str]
-ModulePathPairs: _TypeAlias = List[ModulePathPair]
-ChangesAndRemovals: _TypeAlias = Tuple[ModulePathPairs, ModulePathPairs]
+ModulePathPair = Tuple[str, str]
+ModulePathPairs = List[ModulePathPair]
+ChangesAndRemovals = Tuple[ModulePathPairs, ModulePathPairs]
 
 
 class Server:

@@ -65,9 +65,9 @@ from mypy.parse import parse
 from mypy.subtypes import is_subtype
 from mypy.typeops import custom_special_method
 
-FormatStringExpr: _TypeAlias = Union[StrExpr, BytesExpr]
-Checkers: _TypeAlias = Tuple[Callable[[Expression], None], Callable[[Type], bool]]
-MatchMap: _TypeAlias = Dict[Tuple[int, int], Match[str]]  # span -> match
+FormatStringExpr = Union[StrExpr, BytesExpr]
+Checkers = Tuple[Callable[[Expression], None], Callable[[Type], bool]]
+MatchMap = Dict[Tuple[int, int], Match[str]]  # span -> match
 
 
 def compile_format_re() -> Pattern[str]:

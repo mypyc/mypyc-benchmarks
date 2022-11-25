@@ -33,10 +33,10 @@ from typing_extensions import Final, TypeAlias as _TypeAlias
 from mypy import defaults
 from mypy.options import PER_MODULE_OPTIONS, Options
 
-_CONFIG_VALUE_TYPES: _TypeAlias = Union[
+_CONFIG_VALUE_TYPES = Union[
     str, bool, int, float, Dict[str, str], List[str], Tuple[int, int],
 ]
-_INI_PARSER_CALLABLE: _TypeAlias = Callable[[Any], _CONFIG_VALUE_TYPES]
+_INI_PARSER_CALLABLE = Callable[[Any], _CONFIG_VALUE_TYPES]
 
 
 def parse_version(v: str | float) -> tuple[int, int]:

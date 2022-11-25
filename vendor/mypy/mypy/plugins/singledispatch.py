@@ -76,7 +76,7 @@ def make_fake_register_class_instance(
     return Instance(info, type_args)
 
 
-PluginContext: _TypeAlias = Union[FunctionContext, MethodContext]
+PluginContext = Union[FunctionContext, MethodContext]
 
 
 def fail(ctx: PluginContext, msg: str, context: Context | None) -> None:

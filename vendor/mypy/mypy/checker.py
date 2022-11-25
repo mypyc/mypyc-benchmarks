@@ -224,8 +224,8 @@ T = TypeVar("T")
 
 DEFAULT_LAST_PASS: Final = 1  # Pass numbers start at 0
 
-DeferredNodeType: _TypeAlias = Union[FuncDef, LambdaExpr, OverloadedFuncDef, Decorator]
-FineGrainedDeferredNodeType: _TypeAlias = Union[FuncDef, MypyFile, OverloadedFuncDef]
+DeferredNodeType = Union[FuncDef, LambdaExpr, OverloadedFuncDef, Decorator]
+FineGrainedDeferredNodeType = Union[FuncDef, MypyFile, OverloadedFuncDef]
 
 
 # A node which is postponed to be processed during the next pass.
@@ -258,7 +258,7 @@ class FineGrainedDeferredNode(NamedTuple):
 # (such as two references to the same variable). TODO: it would
 # probably be better to have the dict keyed by the nodes' literal_hash
 # field instead.
-TypeMap: _TypeAlias = Optional[Dict[Expression, Type]]
+TypeMap = Optional[Dict[Expression, Type]]
 
 
 # An object that represents either a precise type or a type with an upper bound;

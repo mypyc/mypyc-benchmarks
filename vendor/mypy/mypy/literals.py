@@ -128,7 +128,7 @@ def literal(e: Expression) -> int:
     return LITERAL_NO
 
 
-Key: _TypeAlias = Tuple[Any, ...]
+Key = Tuple[Any, ...]
 
 
 def subkeys(key: Key) -> Iterable[Key]:

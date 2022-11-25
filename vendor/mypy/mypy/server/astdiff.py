@@ -109,7 +109,7 @@ from mypy.util import get_prefix
 # snapshots are immutable).
 #
 # For example, the snapshot of the 'int' type is ('Instance', 'builtins.int', ()).
-SnapshotItem: _TypeAlias = Tuple[object, ...]
+SnapshotItem = Tuple[object, ...]
 
 
 def compare_symbol_table_snapshots(

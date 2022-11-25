@@ -48,7 +48,7 @@ class Missing:
 MISSING: typing_extensions.Final = Missing()
 
 T = TypeVar("T")
-MaybeMissing: typing_extensions.TypeAlias = Union[T, Missing]
+MaybeMissing = Union[T, Missing]
 
 _formatter: typing_extensions.Final = FancyFormatter(sys.stdout, sys.stderr, False)
 

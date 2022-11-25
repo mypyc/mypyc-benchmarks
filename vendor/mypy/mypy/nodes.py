@@ -80,7 +80,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
-JsonDict: _TypeAlias = Dict[str, Any]
+JsonDict = Dict[str, Any]
 
 
 # Symbol table node kinds
@@ -233,7 +233,7 @@ class FakeExpression(Expression):
 # TODO:
 # Lvalue = Union['NameExpr', 'MemberExpr', 'IndexExpr', 'SuperExpr', 'StarExpr'
 #                'TupleExpr']; see #1783.
-Lvalue: _TypeAlias = Expression
+Lvalue = Expression
 
 
 @trait
@@ -269,7 +269,7 @@ class SymbolNode(Node):
 
 
 # Items: fullname, related symbol table node, surrounding type (if any)
-Definition: _TypeAlias = Tuple[str, "SymbolTableNode", Optional["TypeInfo"]]
+Definition = Tuple[str, "SymbolTableNode", Optional["TypeInfo"]]
 
 
 class MypyFile(SymbolNode):
@@ -539,7 +539,7 @@ class FuncBase(Node):
         return self._fullname
 
 
-OverloadPart: _TypeAlias = Union["FuncDef", "Decorator"]
+OverloadPart = Union["FuncDef", "Decorator"]
 
 
 class OverloadedFuncDef(FuncBase, SymbolNode, Statement):

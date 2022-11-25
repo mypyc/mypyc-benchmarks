@@ -38,7 +38,7 @@ class DeleteFile(NamedTuple):
     path: str
 
 
-FileOperation: _TypeAlias = Union[UpdateFile, DeleteFile]
+FileOperation = Union[UpdateFile, DeleteFile]
 
 
 def parse_test_case(case: DataDrivenTestCase) -> None:

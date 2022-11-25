@@ -13,15 +13,15 @@ from mypy.server.trigger import make_trigger
 from mypy.types import Instance, Type, TypeVarId, get_proper_type
 
 # Represents that the 'left' instance is a subtype of the 'right' instance
-SubtypeRelationship: _TypeAlias = Tuple[Instance, Instance]
+SubtypeRelationship = Tuple[Instance, Instance]
 
 # A tuple encoding the specific conditions under which we performed the subtype check.
 # (e.g. did we want a proper subtype? A regular subtype while ignoring variance?)
-SubtypeKind: _TypeAlias = Tuple[bool, ...]
+SubtypeKind = Tuple[bool, ...]
 
 # A cache that keeps track of whether the given TypeInfo is a part of a particular
 # subtype relationship
-SubtypeCache: _TypeAlias = Dict[TypeInfo, Dict[SubtypeKind, Set[SubtypeRelationship]]]
+SubtypeCache = Dict[TypeInfo, Dict[SubtypeKind, Set[SubtypeRelationship]]]
 
 
 class TypeState:

@@ -57,7 +57,7 @@ if TYPE_CHECKING:
     from mypy.build import Graph, State
 
 
-Patches: _TypeAlias = List[Tuple[int, Callable[[], None]]]
+Patches = List[Tuple[int, Callable[[], None]]]
 
 
 # If we perform this many iterations, raise an exception since we are likely stuck.
@@ -293,7 +293,7 @@ def process_top_level_function(
     analyzer.saved_locals.clear()
 
 
-TargetInfo: _TypeAlias = Tuple[
+TargetInfo = Tuple[
     str, Union[MypyFile, FuncDef, OverloadedFuncDef, Decorator], Optional[TypeInfo]
 ]
 

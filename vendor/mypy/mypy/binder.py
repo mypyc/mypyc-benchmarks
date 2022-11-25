@@ -22,7 +22,7 @@ from mypy.types import (
 )
 from mypy.typevars import fill_typevars_with_any
 
-BindableExpression: _TypeAlias = Union[IndexExpr, MemberExpr, NameExpr]
+BindableExpression = Union[IndexExpr, MemberExpr, NameExpr]
 
 
 class Frame:
