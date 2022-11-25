@@ -19,7 +19,8 @@ class BenchmarkInfo(NamedTuple):
     name: str
     module: str
     perform: Callable[[BenchmarkContext], object]
-    prepare: Callable[[], None] | None
+    # Argument is path to mypy repo we are benchmarking
+    prepare: Callable[[str | None], None] | None
     compiled_only: bool
 
 
@@ -31,7 +32,7 @@ T = TypeVar("T")
 
 def benchmark(
         *,
-        prepare: Callable[[], None] | None = None,
+        prepare: Callable[[str | None], None] | None = None,
         compiled_only: bool = False) -> Callable[[Callable[[], T]], Callable[[], T]]:
     """Define a benchmark.
 

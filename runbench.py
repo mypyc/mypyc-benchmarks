@@ -65,7 +65,8 @@ def run_benchmark(benchmark: BenchmarkInfo,
                   priority: bool,
                   interpreted: bool,
                   compiled: bool,
-                  min_iter: int) -> None:
+                  min_iter: int,
+                  mypy_repo: Optional[str]) -> None:
     assert compiled or interpreted
     if benchmark.compiled_only:
         assert not interpreted
@@ -73,7 +74,7 @@ def run_benchmark(benchmark: BenchmarkInfo,
     if benchmark.prepare:
         if not raw_output:
             print('preparing %s' % benchmark.name)
-        benchmark.prepare()
+        benchmark.prepare(mypy_repo)
 
     if not raw_output:
         print('running %s' % benchmark.name)
@@ -272,6 +273,7 @@ def main() -> None:
         not args.compiled_only,
         not args.interpreted_only,
         args.min_iter,
+        args.mypy_repo,
     )
 
 
