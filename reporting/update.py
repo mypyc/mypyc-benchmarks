@@ -72,33 +72,35 @@ def compiled_csv_path(data_repo: str, benchmark: str) -> str:
     return os.path.join(data_repo, DATA_DIR, '%s.csv' % benchmark)
 
 
-def collect_new_baselines(data_repo: str) -> List[str]:
-    """Collect interpreted baseline measurements for all new benchmarks.
+def collect_new_benchmarks(data_repo: str) -> List[str]:
+    """Find new benchmarks and collect interpreted baseline measurements for them.
 
-    Return list of new benchmark names
+    Return a list of new benchmark names.
     """
     result = []
     heading('Looking for new benchmarks')
     benchmarks = get_benchmark_names()
-    new_benchmarks = []
+    new_benchmarks_missing_baselines = []
     for benchmark in benchmarks:
         baseline_fnam = baseline_csv_path(data_repo, benchmark)
         if not os.path.isfile(baseline_fnam):
-            new_benchmarks.append(benchmark)
-    if not new_benchmarks:
-        log('No new benchmarks found')
+            if not benchmarks[benchmark]:
+                new_benchmarks_missing_baselines.append(benchmark)
+            result.append(benchmark)
+    if not new_benchmarks_missing_baselines:
+        log('No new benchmarks found that need baseline data')
     else:
-        log('Found %d new benchmarks without baseline data:' % len(new_benchmarks))
-        for benchmark in new_benchmarks:
+        log('Found %d new benchmarks without baseline data:' % len(
+            new_benchmarks_missing_baselines))
+        for benchmark in new_benchmarks_missing_baselines:
             log(' * %s' % benchmark)
-    for benchmark in new_benchmarks:
+    for benchmark in new_benchmarks_missing_baselines:
         baseline_fnam = baseline_csv_path(data_repo, benchmark)
         heading('Collecting baseline for new benchmark "%s"' % benchmark)
         cmd = ['python', '-m', 'reporting.collect_baseline', benchmark, data_repo]
         run(cmd, cwd=benchmarks_repo)
         if not dry_run:
             assert os.path.isfile(baseline_fnam)
-        result.append(benchmark)
     return result
 
 
@@ -198,7 +200,7 @@ def main() -> None:
         pull_repos([mypy_repo, benchmarks_repo, data_repo])
 
     # Collect baseline interpreted measurements for any new benchmarks.
-    new_benchmarks = collect_new_baselines(data_repo)
+    new_benchmarks = collect_new_benchmarks(data_repo)
 
     run_compiled_benchmarks(mypy_repo, data_repo, new_benchmarks)
 

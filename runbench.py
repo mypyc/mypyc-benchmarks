@@ -67,6 +67,8 @@ def run_benchmark(benchmark: BenchmarkInfo,
                   compiled: bool,
                   min_iter: int) -> None:
     assert compiled or interpreted
+    if benchmark.compiled_only:
+        assert not interpreted
 
     if benchmark.prepare:
         if not raw_output:
@@ -241,7 +243,9 @@ def main() -> None:
         for benchmark in sorted(benchmarks):
             suffix = ''
             if benchmark.module.startswith('microbenchmarks.'):
-                suffix = ' (micro)'
+                suffix += ' (micro)'
+            if benchmark.compiled_only:
+                suffix += ' (compiled only)'
             print(benchmark.name + suffix)
         sys.exit(0)
 
@@ -251,6 +255,9 @@ def main() -> None:
             break
     else:
         sys.exit('unknown benchmark %r' % name)
+
+    if not args.compiled_only and benchmark.compiled_only:
+        sys.exit(f'Benchmark "{benchmark.name}" cannot be run in interpreted mode')
 
     if args.interpreted_only:
         binary = None

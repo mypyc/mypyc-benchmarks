@@ -28,14 +28,18 @@ def gen_data_for_benchmark(baselines: List[DataItem],
     for item in reversed(runs):
         baseline = find_baseline(baselines, item)
         perf_change = ''
-        if prev_runtime and item.runtime != 0.0:
-            change = 100.0 * ((baseline.runtime / item.runtime) /
-                              (prev_baseline_runtime / prev_runtime) - 1.0)
-            if is_significant_percent_change(item.benchmark, change, is_microbenchmark):
-                perf_change = '%+.1f%%' % change
-        if item.runtime != 0.0:
-            relative = baseline.runtime / item.runtime
+        if baseline:
+            if prev_runtime and item.runtime != 0.0:
+                change = 100.0 * ((baseline.runtime / item.runtime) /
+                                  (prev_baseline_runtime / prev_runtime) - 1.0)
+                if is_significant_percent_change(item.benchmark, change, is_microbenchmark):
+                    perf_change = '%+.1f%%' % change
+            if item.runtime != 0.0:
+                relative = baseline.runtime / item.runtime
+            else:
+                relative = 0.0
         else:
+            change = 100.0 * (prev_runtime / item.runtime - 1.0)
             relative = 0.0
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
@@ -45,7 +49,8 @@ def gen_data_for_benchmark(baselines: List[DataItem],
         )
         result.append(new_item)
         prev_runtime = item.runtime
-        prev_baseline_runtime = baseline.runtime
+        if baseline:
+            prev_baseline_runtime = baseline.runtime
     return list(reversed(result))
 
 

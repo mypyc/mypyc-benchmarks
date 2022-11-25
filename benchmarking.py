@@ -20,9 +20,10 @@ class BenchmarkInfo(NamedTuple):
     module: str
     perform: Callable[[BenchmarkContext], object]
     prepare: Callable[[], None] | None
+    compiled_only: bool
 
 
-benchmarks = []  # type: List[BenchmarkInfo]
+benchmarks: List[BenchmarkInfo] = []
 
 
 T = TypeVar("T")
@@ -30,13 +31,15 @@ T = TypeVar("T")
 
 def benchmark(
         *,
-        prepare: Callable[[], None] | None = None) -> Callable[[Callable[[], T]], Callable[[], T]]:
+        prepare: Callable[[], None] | None = None,
+        compiled_only: bool = False) -> Callable[[Callable[[], T]], Callable[[], T]]:
     """Define a benchmark.
 
     Args:
         prepare: If given, called once before running the benchmark to set up external state.
             This does not run in the same process as the actual benchmark so it's mostly useful
             for setting up file system state, data files, etc.
+        compiled_only: This benchmark only runs in compiled mode (no interpreted mode).
     """
 
     def outer_wrapper(func: Callable[[], T]) -> Callable[[], T]:
@@ -45,20 +48,21 @@ def benchmark(
         def wrapper(ctx: BenchmarkContext) -> T:
             return func()
 
-        benchmark = BenchmarkInfo(name, func.__module__, wrapper, prepare)
+        benchmark = BenchmarkInfo(name, func.__module__, wrapper, prepare, compiled_only)
         benchmarks.append(benchmark)
         return func
 
     return outer_wrapper
 
 
+# TODO: Merge with "benchmark"
 def benchmark_with_context(
         func: Callable[[BenchmarkContext], T]) -> Callable[[BenchmarkContext], T]:
     name = func.__name__
     if name.startswith('__mypyc_'):
         name = name.replace('__mypyc_', '')
         name = name.replace('_decorator_helper__', '')
-    benchmark = BenchmarkInfo(name, func.__module__, func, None)
+    benchmark = BenchmarkInfo(name, func.__module__, func, None, False)
     benchmarks.append(benchmark)
     return func
 

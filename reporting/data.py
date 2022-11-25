@@ -1,4 +1,4 @@
-from typing import NamedTuple, List, Dict, Set, Tuple
+from typing import NamedTuple, List, Dict, Set, Tuple, Optional
 from datetime import datetime
 import os
 import re
@@ -141,12 +141,13 @@ def load_scaling_data(data_repo: str) -> Dict[str, List[ScalingItem]]:
     return result
 
 
-def get_benchmark_names() -> Set[str]:
+def get_benchmark_names() -> Dict[str, bool]:
     """Get names of all benchmarks (normal and microbenchmarks)."""
-    result = set()
+    result = {}
     data = subprocess.check_output(['python', 'runbench.py', '--list']).decode('ascii')
     for line in data.splitlines():
-        result.add(line.split()[0])
+        compiled_only = 'compiled only' in line
+        result[line.split()[0]] = compiled_only
     return result
 
 
@@ -180,14 +181,14 @@ def sort_data_items(items: List[DataItem], commit_order: Dict[str, int]) -> List
     return sorted(items, key=lambda x: commit_order[x.mypy_commit])
 
 
-def find_baseline(baselines: List[DataItem], run: DataItem) -> DataItem:
+def find_baseline(baselines: List[DataItem], run: DataItem) -> Optional[DataItem]:
     """Find the corresponding baseline measurement for a benchmark run."""
     for item in baselines:
         if (item.python_version == run.python_version
                 and item.hardware_id == run.hardware_id
                 and item.os_version == run.os_version):
             return item
-    assert False, "No baseline found for %r" % (run,)
+    return None
 
 
 # Override the default significance levels for benchmarks that aren't very noisy.

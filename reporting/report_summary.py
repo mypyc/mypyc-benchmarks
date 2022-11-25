@@ -26,9 +26,13 @@ def gen_summary_data(benchmarks: List[str],
         print('generating summary data for %r' % benchmark)
         newest_item = min(runs[benchmark], key=lambda x: commit_order[x.mypy_commit])
         new_baseline = find_baseline(baselines[benchmark], newest_item)
+        if new_baseline is None:
+            # Probably a compiled-only benchmark, for which we don't include in the summary
+            continue
         three_months_ago = datetime.utcnow() - timedelta(days=30 * 3)
         old_item = find_item_at_time(runs[benchmark], three_months_ago, commit_times)
         old_baseline = find_baseline(baselines[benchmark], old_item)
+        assert old_baseline, f'baseline missing for {benchmark!r}'
         delta_3m = ''
         if newest_item.runtime != 0.0 and old_item.runtime != 0.0:
             relative_perf = ((new_baseline.runtime / newest_item.runtime) /
