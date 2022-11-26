@@ -347,7 +347,7 @@ def num_primes(n: int) -> int:
 
 
 @benchmark()
-def sorted_with_key():
+def sorted_with_key() -> None:
     n = 10
     a = []
     for i in range(n):
