@@ -57,6 +57,8 @@ def run_bench(benchmark: str,
     except subprocess.CalledProcessError:
         # The benchmark run failed. Record zero values to signal than something
         # is wrong.
+        print(f'!!! Running benchmark {benchmark} failed:')
+        print(output)
         return 0.0, 0.0
     last_line = output.rstrip().splitlines()[-1]
     fields = last_line.split()
