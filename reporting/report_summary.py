@@ -37,9 +37,13 @@ def gen_summary_data(benchmarks: List[str],
             if is_significant_percent_change(benchmark, percentage_3m,
                                              benchmark in microbenchmarks):
                 delta_3m = '%+.1f%%' % percentage_3m
+        if newest_item.runtime != 0:
+            relative_perf = new_baseline.runtime / newest_item.runtime
+        else:
+            relative_perf = 0.0
         summary_item = SummaryItem(
             benchmark=benchmark,
-            relative_perf=new_baseline.runtime / newest_item.runtime,
+            relative_perf=relative_perf,
             delta_three_months=delta_3m,
         )
         result.append(summary_item)
