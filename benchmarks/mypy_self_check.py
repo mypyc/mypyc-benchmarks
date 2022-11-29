@@ -58,7 +58,7 @@ def prepare(mypy_repo: str | None) -> None:
     subprocess.run([pip, 'install', '-r', reqs], check=True)
 
     print('cloning mypy')
-    subprocess.run(['git', 'clone', '--depth', '1', mypy_repo, MYPY_CLONE], check=True)
+    subprocess.run(['git', 'clone', mypy_repo, MYPY_CLONE], check=True)
 
     print('building and installing mypy')
     env = os.environ.copy()
