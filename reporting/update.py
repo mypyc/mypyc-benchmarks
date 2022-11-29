@@ -77,16 +77,17 @@ def collect_new_benchmarks(data_repo: str) -> List[str]:
 
     Return a list of new benchmark names.
     """
-    result = []
     heading('Looking for new benchmarks')
     benchmarks = get_benchmark_names()
     new_benchmarks_missing_baselines = []
+    new_compiled_only_benchmarks = []
     for benchmark in benchmarks:
         baseline_fnam = baseline_csv_path(data_repo, benchmark)
         if not os.path.isfile(baseline_fnam):
             if not benchmarks[benchmark]:
                 new_benchmarks_missing_baselines.append(benchmark)
-            result.append(benchmark)
+            elif not os.path.isfile(compiled_csv_path(data_repo, benchmark)):
+                new_compiled_only_benchmarks.append(benchmark)
     if not new_benchmarks_missing_baselines:
         log('No new benchmarks found that need baseline data')
     else:
@@ -94,6 +95,12 @@ def collect_new_benchmarks(data_repo: str) -> List[str]:
             new_benchmarks_missing_baselines))
         for benchmark in new_benchmarks_missing_baselines:
             log(' * %s' % benchmark)
+    if new_compiled_only_benchmarks:
+        log('Found %d new compiled-only benchmarks:' % len(
+            new_compiled_only_benchmarks))
+        for benchmark in new_compiled_only_benchmarks:
+            log(' * %s' % benchmark)
+
     for benchmark in new_benchmarks_missing_baselines:
         baseline_fnam = baseline_csv_path(data_repo, benchmark)
         heading('Collecting baseline for new benchmark "%s"' % benchmark)
@@ -101,7 +108,8 @@ def collect_new_benchmarks(data_repo: str) -> List[str]:
         run(cmd, cwd=benchmarks_repo)
         if not dry_run:
             assert os.path.isfile(baseline_fnam)
-    return result
+
+    return new_benchmarks_missing_baselines + new_compiled_only_benchmarks
 
 
 def run_compiled_benchmarks(mypy_repo: str, data_repo: str, new_benchmarks: List[str]) -> None:
