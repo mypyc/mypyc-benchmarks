@@ -12,7 +12,7 @@ from reporting.data import (
 
 class BenchmarkItem(NamedTuple):
     date: str
-    relative_perf: float
+    perf: str
     perf_change: str
     mypy_commit: str
 
@@ -36,14 +36,15 @@ def gen_data_for_benchmark(baselines: List[DataItem],
                     perf_change = '%+.1f%%' % change
             if item.runtime != 0.0:
                 relative = baseline.runtime / item.runtime
+                perf = '%.2fx' % relative
             else:
-                relative = 0.0
+                perf = '**error**'
         else:
             change = 100.0 * (prev_runtime / item.runtime - 1.0)
-            relative = 0.0
+            perf = '%.2fs' % item.runtime
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
-            relative_perf=relative,
+            perf=perf,
             perf_change=perf_change,
             mypy_commit=item.mypy_commit,
         )
@@ -60,18 +61,15 @@ def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
     lines.append('| Date | Performance | Change | Mypy commit |')
     lines.append('| --- | :---: | :---: | --- |')
     for i, item in enumerate(data):
-        if item.relative_perf != 0.0:
-            relative_perf = '%.2fx' % item.relative_perf
-        else:
-            relative_perf = '**error**'
+        perf = item.perf
         if i == 0 or item.perf_change:
-            relative_perf = bold(relative_perf)
+            perf = bold(perf)
         date = item.date
         if i == 0:
             date = bold(date)
         lines.append('| %s | %s | %s | %s |' % (
             date,
-            relative_perf,
+            perf,
             bold(item.perf_change),
             mypy_commit_link(item.mypy_commit),
         ))
