@@ -53,7 +53,7 @@ def run_bench(benchmark: str,
         cmd.extend(['-i', '--min-iter', str(min_iter)])
     cmd.append(benchmark)
     try:
-        output = subprocess.check_output(cmd, env=env).decode("ascii")
+        output = subprocess.check_output(cmd, env=env, text=True)
     except subprocess.CalledProcessError as e:
         # The benchmark run failed. Record zero values to signal than something
         # is wrong.
