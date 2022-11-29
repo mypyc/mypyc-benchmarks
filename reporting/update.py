@@ -157,7 +157,9 @@ def commit(data_repo: str, new_benchmarks: List[str]) -> None:
     heading('Committing changes to data and reports')
     for benchmark in new_benchmarks:
         log('Git add csv data files for "%s"' % benchmark)
-        run(['git', 'add', baseline_csv_path(data_repo, benchmark)], cwd=data_repo)
+        baseline_path = baseline_csv_path(data_repo, benchmark)
+        if os.path.isfile(os.path.join(data_repo, baseline_path)):
+            run(['git', 'add', baseline_path], cwd=data_repo)
         run(['git', 'add', compiled_csv_path(data_repo, benchmark)], cwd=data_repo)
         run(['git', 'add',
              os.path.join(data_repo, REPORTS_DIR, BENCHMARKS_DIR, '%s.md' % benchmark)],
