@@ -97,6 +97,7 @@ class BenchmarkData(NamedTuple):
     microbenchmarks: Set[str]
     # Dict from benchmark name to (source .py file path, line number)
     source_locations: Dict[str, Tuple[str, int]]
+    compiled_only_benchmarks: Set[str]
     # Scaling information for benchmark results between different hardware and
     # python versions (benchmark name as key)
     scaling: Dict[str, List[ScalingItem]]
@@ -124,8 +125,12 @@ def load_data(data_repo: str) -> BenchmarkData:
             runs[benchmark] = items
     microbenchmarks = get_microbenchmark_names()
     source_locations = get_source_locations()
+    compiled_only = {name for name, compiled_only
+                     in get_benchmark_names().items()
+                     if compiled_only}
     scaling = load_scaling_data(data_repo)
-    return BenchmarkData(baselines, runs, microbenchmarks, source_locations, scaling)
+    return BenchmarkData(baselines, runs, microbenchmarks, source_locations, compiled_only,
+                         scaling)
 
 
 def load_scaling_data(data_repo: str) -> Dict[str, List[ScalingItem]]:
@@ -142,7 +147,11 @@ def load_scaling_data(data_repo: str) -> Dict[str, List[ScalingItem]]:
 
 
 def get_benchmark_names() -> Dict[str, bool]:
-    """Get names of all benchmarks (normal and microbenchmarks)."""
+    """Get names of all benchmarks (normal and microbenchmarks).
+
+    The value in the dict is True for compiled-only benchmarks (i.e. no
+    baseline to compare to).
+    """
     result = {}
     data = subprocess.check_output(['python', 'runbench.py', '--list']).decode('ascii')
     for line in data.splitlines():

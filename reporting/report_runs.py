@@ -6,7 +6,7 @@ import os
 from reporting.markdown import bold, mypy_commit_link
 from reporting.data import (
     DataItem, find_baseline, BenchmarkData, sort_data_items, is_significant_percent_change,
-    significant_percent_change
+    significant_percent_change, get_benchmark_names
 )
 
 
@@ -83,12 +83,14 @@ def gen_reports_for_benchmarks(data: BenchmarkData,
                                commit_order: Dict[str, int],
                                commit_dates: Dict[str, Tuple[str, str]]) -> None:
     """Generate separate reports for each benchmark about their runs."""
-    for benchmark in data.baselines:
+    benchmarks = list(data.baselines) + sorted(data.compiled_only_benchmarks)
+
+    for benchmark in benchmarks:
         runs = data.runs.get(benchmark, [])
         runs = sort_data_items(runs, commit_order)
         is_microbenchmark = benchmark in data.microbenchmarks
         items = gen_data_for_benchmark(
-            data.baselines[benchmark],
+            data.baselines.get(benchmark, []),
             runs,
             commit_dates,
             is_microbenchmark,
