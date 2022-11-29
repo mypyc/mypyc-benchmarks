@@ -54,11 +54,11 @@ def run_bench(benchmark: str,
     cmd.append(benchmark)
     try:
         output = subprocess.check_output(cmd, env=env).decode("ascii")
-    except subprocess.CalledProcessError:
+    except subprocess.CalledProcessError as e:
         # The benchmark run failed. Record zero values to signal than something
         # is wrong.
         print(f'!!! Running benchmark {benchmark} failed:')
-        print(output)
+        print(e.output)
         return 0.0, 0.0
     last_line = output.rstrip().splitlines()[-1]
     fields = last_line.split()
