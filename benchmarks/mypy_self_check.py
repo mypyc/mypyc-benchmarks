@@ -86,7 +86,7 @@ def prepare(mypy_repo: str | None) -> None:
     print('successfully installed compiled mypy')
 
 
-@benchmark(prepare=prepare, compiled_only=True)
+@benchmark(prepare=prepare, compiled_only=True, min_iterations=25)
 def mypy_self_check() -> None:
     assert os.path.isdir('vendor')
     if os.path.isdir('.mypy_cache'):
