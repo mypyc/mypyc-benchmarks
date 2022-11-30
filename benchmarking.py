@@ -22,6 +22,7 @@ class BenchmarkInfo(NamedTuple):
     # Argument is path to mypy repo we are benchmarking
     prepare: Callable[[str | None], None] | None
     compiled_only: bool
+    min_iterations: int | None
 
 
 benchmarks: List[BenchmarkInfo] = []
@@ -33,7 +34,8 @@ T = TypeVar("T")
 def benchmark(
         *,
         prepare: Callable[[str | None], None] | None = None,
-        compiled_only: bool = False) -> Callable[[Callable[[], T]], Callable[[], T]]:
+        compiled_only: bool = False,
+        min_iterations: int | None = None) -> Callable[[Callable[[], T]], Callable[[], T]]:
     """Define a benchmark.
 
     Args:
@@ -49,7 +51,8 @@ def benchmark(
         def wrapper(ctx: BenchmarkContext) -> T:
             return func()
 
-        benchmark = BenchmarkInfo(name, func.__module__, wrapper, prepare, compiled_only)
+        benchmark = BenchmarkInfo(
+            name, func.__module__, wrapper, prepare, compiled_only, min_iterations)
         benchmarks.append(benchmark)
         return func
 
@@ -63,7 +66,7 @@ def benchmark_with_context(
     if name.startswith('__mypyc_'):
         name = name.replace('__mypyc_', '')
         name = name.replace('_decorator_helper__', '')
-    benchmark = BenchmarkInfo(name, func.__module__, func, None, False)
+    benchmark = BenchmarkInfo(name, func.__module__, func, None, False, None)
     benchmarks.append(benchmark)
     return func
 

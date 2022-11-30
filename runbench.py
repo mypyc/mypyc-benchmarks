@@ -71,6 +71,13 @@ def run_benchmark(benchmark: BenchmarkInfo,
     if benchmark.compiled_only:
         assert not interpreted
 
+    if min_iter < 0:
+        # Use default minimum iterations
+        if benchmark.min_iterations is not None:
+            min_iter = benchmark.min_iterations
+        else:
+            min_iter = MIN_ITER
+
     if benchmark.prepare:
         if not raw_output:
             print('preparing %s' % benchmark.name)
@@ -212,7 +219,7 @@ def parse_args() -> Args:
                         help="only run in compiled mode")
     parser.add_argument('-i', action='store_true',
                         help="only run in interpreted mode")
-    parser.add_argument('--min-iter', type=int, default=MIN_ITER, metavar="N",
+    parser.add_argument('--min-iter', type=int, default=-1, metavar="N",
                         help="""set minimum number of iterations (half of the results
                                 will be discarded; default %d)""" % MIN_ITER)
     parsed = parser.parse_args()
