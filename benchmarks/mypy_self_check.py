@@ -91,7 +91,7 @@ def prepare(mypy_repo: str | None) -> None:
 @benchmark(
     prepare=prepare,
     compiled_only=True,
-    min_iterations=30,
+    min_iterations=100,
     strip_outlier_runs=True,
     stable_hash_seed=True,
 )
