@@ -120,12 +120,12 @@ def run_benchmark(benchmark: BenchmarkInfo,
             break
     if not raw_output:
         print()
-    if benchmark.strip_outlier_runs:
-        times_interpreted = smoothen(times_interpreted)
-        times_compiled = smoothen(times_compiled)
     if benchmark.compiled_only:
         # TODO: Remove this once it's no longer needed for debugging
         print(f'runtimes: {sorted(times_compiled)}')
+    if benchmark.strip_outlier_runs:
+        times_interpreted = smoothen(times_interpreted)
+        times_compiled = smoothen(times_compiled)
     n = max(len(times_interpreted), len(times_compiled))
     if interpreted:
         stdev1 = statistics.stdev(times_interpreted)
