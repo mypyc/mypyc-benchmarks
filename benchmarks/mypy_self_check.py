@@ -97,8 +97,6 @@ def prepare(mypy_repo: str | None) -> None:
 )
 def mypy_self_check() -> None:
     assert os.path.isdir('vendor')
-    if os.path.isdir('.mypy_cache'):
-        shutil.rmtree('.mypy_cache')
     env = os.environ.copy()
     if 'PYTHONPATH' in env:
         del env['PYTHONPATH']
@@ -110,6 +108,7 @@ def mypy_self_check() -> None:
             '--config-file',
             'vendor/mypy/mypy_self_check.ini',
             '--fast-exit',
+            '--no-incremental',
             'vendor/mypy/mypy',
         ],
         env=env,
