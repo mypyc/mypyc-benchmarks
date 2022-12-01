@@ -45,6 +45,8 @@ def benchmark(
             This does not run in the same process as the actual benchmark so it's mostly useful
             for setting up file system state, data files, etc.
         compiled_only: This benchmark only runs in compiled mode (no interpreted mode).
+        strip_outlier_runs: If True (default), aggressively try to strip outlier runs.
+            Otherwise, no (or few) outlier runs will be removed.
     """
 
     def outer_wrapper(func: Callable[[], T]) -> Callable[[], T]:
