@@ -63,7 +63,9 @@ def prepare(mypy_repo: str | None) -> None:
     print('building and installing mypy')
     env = os.environ.copy()
     env["CC"] = "clang"
-    env["MYPYC_OPT_LEVEL"] = "3"
+    # Use -O2 since it's a bit faster to compile. The runtimes might be also be more
+    # predictable than with -O3, but that's just a hypothesis.
+    env["MYPYC_OPT_LEVEL"] = "2"
     if "PYTHONPATH" in env:
         del env["PYTHONPATH"]
     if "MYPYPATH" in env:
