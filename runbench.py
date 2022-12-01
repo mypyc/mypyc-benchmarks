@@ -102,9 +102,8 @@ def run_benchmark(benchmark: BenchmarkInfo,
     n = 0
     while True:
         if benchmark.stable_hash_seed:
-            # This makes hash values more predictable. Don't use a constant hash value
-            # since it can bias results.
-            env["PYTHONHASHSEED"] = str(n + 1)
+            # This makes hash values more predictable.
+            env["PYTHONHASHSEED"] = "1"
         if compiled:
             t = run_in_subprocess(benchmark, binary, compiled=True, priority=priority, env=env)
             times_compiled.append(t)
