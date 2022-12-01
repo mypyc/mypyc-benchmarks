@@ -123,7 +123,7 @@ def run_benchmark(benchmark: BenchmarkInfo,
     if benchmark.strip_outlier_runs:
         times_interpreted = smoothen(times_interpreted)
         times_compiled = smoothen(times_compiled)
-    elif benchmark.compiled_only:
+    if benchmark.compiled_only:
         # TODO: Remove this once it's no longer needed for debugging
         print(f'runtimes: {sorted(times_compiled)}')
     n = max(len(times_interpreted), len(times_compiled))
