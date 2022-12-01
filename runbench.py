@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from importlib import import_module
-from typing import Tuple, List, NamedTuple, Optional
+from typing import NamedTuple
 import argparse
 import glob
 import re
@@ -23,7 +25,7 @@ MIN_ITER = 10
 BINARY_EXTENSION: Final = 'pyd' if sys.platform == 'win32' else 'so'
 
 def run_in_subprocess(benchmark: BenchmarkInfo,
-                      binary: Optional[str],
+                      binary: str | None,
                       compiled: bool,
                       priority: bool = False,
                       env: dict[str, str] | None = None) -> float:
@@ -54,20 +56,20 @@ def parse_elapsed_time(output: bytes) -> float:
     return float(m.group(1))
 
 
-def smoothen(a: List[float]) -> List[float]:
+def smoothen(a: list[float]) -> list[float]:
     # Keep the lowest half of values
     return sorted(a)[: (len(a) + 1) // 2]
 
 
 
 def run_benchmark(benchmark: BenchmarkInfo,
-                  binary: Optional[str],
+                  binary: str | None,
                   raw_output: bool,
                   priority: bool,
                   interpreted: bool,
                   compiled: bool,
                   min_iter: int,
-                  mypy_repo: Optional[str]) -> None:
+                  mypy_repo: str | None) -> None:
     assert compiled or interpreted
     if benchmark.compiled_only:
         assert not interpreted
@@ -159,7 +161,7 @@ def run_benchmark(benchmark: BenchmarkInfo,
             stdev2))
 
 
-def compile_benchmark(module: str, raw_output: bool, mypy_repo: Optional[str]) -> str:
+def compile_benchmark(module: str, raw_output: bool, mypy_repo: str | None) -> str:
     fnam = module.replace('.', '/') + '.py'
     if not raw_output:
         print('compiling %s...' % module)
@@ -205,7 +207,7 @@ def delete_binaries() -> None:
 
 class Args(NamedTuple):
     benchmark: str
-    mypy_repo: Optional[str]
+    mypy_repo: str | None
     is_list: bool
     raw: bool
     priority: bool
