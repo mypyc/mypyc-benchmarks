@@ -107,7 +107,6 @@ def mypy_self_check() -> None:
             os.path.join(VENV_DIR, 'bin', 'mypy'),
             '--config-file',
             'vendor/mypy/mypy_self_check.ini',
-            '--fast-exit',
             '--no-incremental',
             'vendor/mypy/mypy',
         ],
