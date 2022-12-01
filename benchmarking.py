@@ -24,6 +24,7 @@ class BenchmarkInfo(NamedTuple):
     compiled_only: bool
     min_iterations: int | None
     strip_outlier_runs: bool
+    stable_hash_seed: bool
 
 
 benchmarks: List[BenchmarkInfo] = []
@@ -37,7 +38,8 @@ def benchmark(
         prepare: Callable[[str | None], None] | None = None,
         compiled_only: bool = False,
         min_iterations: int | None = None,
-        strip_outlier_runs: bool = True) -> Callable[[Callable[[], T]], Callable[[], T]]:
+        strip_outlier_runs: bool = True,
+        stable_hash_seed: bool = False) -> Callable[[Callable[[], T]], Callable[[], T]]:
     """Define a benchmark.
 
     Args:
@@ -47,6 +49,8 @@ def benchmark(
         compiled_only: This benchmark only runs in compiled mode (no interpreted mode).
         strip_outlier_runs: If True (default), aggressively try to strip outlier runs.
             Otherwise, no (or few) outlier runs will be removed.
+        stable_hash_seed: If True, use predictable hash seed in CPython (it still varies
+            between runs, but it's not random)
     """
 
     def outer_wrapper(func: Callable[[], T]) -> Callable[[], T]:
@@ -63,6 +67,7 @@ def benchmark(
             compiled_only,
             min_iterations,
             strip_outlier_runs,
+            stable_hash_seed,
         )
         benchmarks.append(benchmark)
         return func
@@ -77,7 +82,7 @@ def benchmark_with_context(
     if name.startswith('__mypyc_'):
         name = name.replace('__mypyc_', '')
         name = name.replace('_decorator_helper__', '')
-    benchmark = BenchmarkInfo(name, func.__module__, func, None, False, None, True)
+    benchmark = BenchmarkInfo(name, func.__module__, func, None, False, None, True, False)
     benchmarks.append(benchmark)
     return func
 

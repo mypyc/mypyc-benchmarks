@@ -25,7 +25,8 @@ BINARY_EXTENSION: Final = 'pyd' if sys.platform == 'win32' else 'so'
 def run_in_subprocess(benchmark: BenchmarkInfo,
                       binary: Optional[str],
                       compiled: bool,
-                      priority: bool = False) -> float:
+                      priority: bool = False,
+                      env: dict[str, str] | None = None) -> float:
     module = benchmark.module
     program = 'import %s; import benchmarking as bm; print("\\nelapsed:", bm.run_once("%s"))' % (
         module,
@@ -39,7 +40,7 @@ def run_in_subprocess(benchmark: BenchmarkInfo,
         # Use nice to increase process priority.
         cmd = ['sudo', 'nice', '-n', '-5'] + cmd
     try:
-        result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE)
+        result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, env=env)
     finally:
         if not compiled and binary:
             os.rename(binary + '.tmp', binary)
@@ -92,15 +93,21 @@ def run_benchmark(benchmark: BenchmarkInfo,
     if compiled:
         run_in_subprocess(benchmark, binary, compiled=True)
 
+    env = os.environ.copy()
+
     times_compiled = []
     times_interpreted = []
     n = 0
     while True:
+        if benchmark.stable_hash_seed:
+            # This makes hash values more predictable. Don't use a constant hash value
+            # since it can bias results.
+            env["PYTHONHASHSEED"] = str(n + 1)
         if compiled:
-            t = run_in_subprocess(benchmark, binary, compiled=True, priority=priority)
+            t = run_in_subprocess(benchmark, binary, compiled=True, priority=priority, env=env)
             times_compiled.append(t)
         if interpreted:
-            t = run_in_subprocess(benchmark, binary, compiled=False, priority=priority)
+            t = run_in_subprocess(benchmark, binary, compiled=False, priority=priority, env=env)
             times_interpreted.append(t)
         if not raw_output:
             sys.stdout.write('.')
