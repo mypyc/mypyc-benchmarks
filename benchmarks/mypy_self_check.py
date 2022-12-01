@@ -93,6 +93,7 @@ def prepare(mypy_repo: str | None) -> None:
     compiled_only=True,
     min_iterations=25,
     strip_outlier_runs=False,
+    stable_hash_seed=True,
 )
 def mypy_self_check() -> None:
     assert os.path.isdir('vendor')
