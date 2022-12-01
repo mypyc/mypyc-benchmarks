@@ -15,7 +15,6 @@ import os
 import shutil
 import subprocess
 import sys
-import time
 
 from benchmarking import benchmark
 
@@ -85,10 +84,6 @@ def prepare(mypy_repo: str | None) -> None:
 
     print('installing dependencies for type checking')
     subprocess.run([VENV_PYTHON, '-m', 'pip', 'install'] + CHECK_REQUIREMENTS, check=True, env=env)
-
-    # Experiment to see if waiting helps with produce more stable timings.
-    print('waiting for 30s')
-    time.sleep(30)
 
     print('successfully installed compiled mypy')
 
