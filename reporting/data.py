@@ -207,6 +207,7 @@ significant_percent_change_overrides = {
     'str_format': 10.0,
     'str_methods': 10.0,
     'matrix_multiply': 10.0,
+    'mypy_self_check': 1.5,
 }
 
 
