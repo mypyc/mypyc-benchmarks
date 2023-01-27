@@ -421,6 +421,6 @@ def bench_raytrace(loops: int, width: int, height: int, filename: Optional[str])
         canvas.write_ppm(filename)
 
 
-@benchmark
+@benchmark()
 def raytrace() -> None:
     bench_raytrace(1, DEFAULT_WIDTH, DEFAULT_HEIGHT, None)
