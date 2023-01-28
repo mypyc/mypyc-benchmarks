@@ -12,10 +12,12 @@ From http://www.lshift.net/blog/2008/10/29/toy-raytracer-in-python
 Migrated to mypyc by Jukka Lehtosalo.
 """
 
+from __future__ import annotations
+
 import array
 import math
 
-from typing import List, Tuple, Optional, Union, overload
+from typing import Tuple, overload
 from typing_extensions import Final
 
 from benchmarking import benchmark
@@ -43,36 +45,36 @@ class Vector:
         return math.sqrt(self.dot(self))
 
     @overload
-    def __add__(self, other: 'Vector') -> 'Vector': ...
+    def __add__(self, other: Vector) -> Vector: ...
     @overload
-    def __add__(self, other: 'Point') -> 'Point': ...
-    def __add__(self, other: Union['Vector', 'Point']) -> Union['Vector', 'Point']:
+    def __add__(self, other: Point) -> Point: ...
+    def __add__(self, other: Vector | Point) -> Vector | Point:
         if other.isPoint():
             return Point(self.x + other.x, self.y + other.y, self.z + other.z)
         else:
             return Vector(self.x + other.x, self.y + other.y, self.z + other.z)
 
-    def __sub__(self, other: 'Vector') -> 'Vector':
+    def __sub__(self, other: Vector) -> Vector:
         other.mustBeVector()
         return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def scale(self, factor: float) -> 'Vector':
+    def scale(self, factor: float) -> Vector:
         return Vector(factor * self.x, factor * self.y, factor * self.z)
 
-    def dot(self, other: 'Vector') -> float:
+    def dot(self, other: Vector) -> float:
         other.mustBeVector()
         return (self.x * other.x) + (self.y * other.y) + (self.z * other.z)
 
-    def cross(self, other: 'Vector') -> 'Vector':
+    def cross(self, other: Vector) -> Vector:
         other.mustBeVector()
         return Vector(self.y * other.z - self.z * other.y,
                       self.z * other.x - self.x * other.z,
                       self.x * other.y - self.y * other.x)
 
-    def normalized(self) -> 'Vector':
+    def normalized(self) -> Vector:
         return self.scale(1.0 / self.magnitude())
 
-    def negated(self) -> 'Vector':
+    def negated(self) -> Vector:
         return self.scale(-1)
 
     def __eq__(self, other: object) -> bool:
@@ -86,13 +88,13 @@ class Vector:
     def isPoint(self) -> bool:
         return False
 
-    def mustBeVector(self) -> 'Vector':
+    def mustBeVector(self) -> Vector:
         return self
 
     def mustBePoint(self) -> None:
         raise TypeError('Vectors are not points!')
 
-    def reflectThrough(self, normal: 'Vector') -> 'Vector':
+    def reflectThrough(self, normal: Vector) -> Vector:
         d = normal.scale(self.dot(normal))
         return self - d.scale(2)
 
@@ -124,10 +126,10 @@ class Point:
         return Point(self.x + other.x, self.y + other.y, self.z + other.z)
 
     @overload
-    def __sub__(self, other: Vector) -> 'Point': ...
+    def __sub__(self, other: Vector) -> Point: ...
     @overload
-    def __sub__(self, other: 'Point') -> Vector: ...
-    def __sub__(self, other: Union['Point', Vector]) -> Union['Point', Vector]:
+    def __sub__(self, other: Point) -> Vector: ...
+    def __sub__(self, other: Point | Vector) -> Point | Vector:
         if isinstance(other, Point):
             return Vector(self.x - other.x, self.y - other.y, self.z - other.z)
         else:
@@ -142,12 +144,12 @@ class Point:
     def mustBeVector(self) -> None:
         raise TypeError('Points are not vectors!')
 
-    def mustBePoint(self) -> 'Point':
+    def mustBePoint(self) -> Point:
         return self
 
 
 class Object:
-    def intersectionTime(self, ray: 'Ray') -> Optional[float]:
+    def intersectionTime(self, ray: Ray) -> float | None:
         raise NotImplementedError
 
     def normalAt(self, p: Point) -> Vector:
@@ -164,7 +166,7 @@ class Sphere(Object):
     def __repr__(self) -> str:
         return 'Sphere(%s,%s)' % (repr(self.centre), self.radius)
 
-    def intersectionTime(self, ray: 'Ray') -> Optional[float]:
+    def intersectionTime(self, ray: Ray) -> float | None:
         cp = self.centre - ray.point
         v = cp.dot(ray.vector)
         discriminant = (self.radius * self.radius) - (cp.dot(cp) - v * v)
@@ -186,7 +188,7 @@ class Halfspace(Object):
     def __repr__(self) -> str:
         return 'Halfspace(%s,%s)' % (repr(self.point), repr(self.normal))
 
-    def intersectionTime(self, ray: 'Ray') -> Optional[float]:
+    def intersectionTime(self, ray: Ray) -> float | None:
         v = ray.vector.dot(self.normal)
         if v:
             return 1 / -v
@@ -236,9 +238,9 @@ class Canvas:
 
 
 def firstIntersection(
-    intersections: List[Tuple[Object, Optional[float], 'Surface']]
-) -> Optional[Tuple[Object, float, 'Surface']]:
-    result: Optional[Tuple[Object, float, Surface]] = None
+    intersections: list[tuple[Object, float | None, Surface]]
+) -> tuple[Object, float, Surface] | None:
+    result: tuple[Object, float, Surface] | None = None
     for i in intersections:
         candidateT = i[1]
         if candidateT is not None and candidateT > -EPSILON:
@@ -253,8 +255,8 @@ Colour = Tuple[float, float, float]
 class Scene:
 
     def __init__(self) -> None:
-        self.objects: List[Tuple[Object, Surface]] = []
-        self.lightPoints: List[Point] = []
+        self.objects: list[tuple[Object, Surface]] = []
+        self.lightPoints: list[Point] = []
         self.position = Point(0, 1.8, 10)
         self.lookingAt = Point_ZERO
         self.fieldOfView: float = 45
@@ -266,7 +268,7 @@ class Scene:
     def lookAt(self, p: Point) -> None:
         self.lookingAt = p
 
-    def addObject(self, object: Object, surface: 'Surface') -> None:
+    def addObject(self, object: Object, surface: Surface) -> None:
         self.objects.append((object, surface))
 
     def addLight(self, p: Point) -> None:
@@ -317,7 +319,7 @@ class Scene:
                 return False
         return True
 
-    def visibleLights(self, p: Point) -> List[Point]:
+    def visibleLights(self, p: Point) -> list[Point]:
         result = []
         for l in self.lightPoints:
             if self._lightIsVisible(l, p):
@@ -401,7 +403,7 @@ class CheckerboardSurface(SimpleSurface):
             return self.baseColour
 
 
-def bench_raytrace(loops: int, width: int, height: int, filename: Optional[str]) -> None:
+def bench_raytrace(loops: int, width: int, height: int, filename: str | None) -> None:
     range_it = range(loops)
 
     for i in range_it:
