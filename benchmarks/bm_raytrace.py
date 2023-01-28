@@ -8,6 +8,8 @@ This file may be freely redistributed under the MIT license,
 http://www.opensource.org/licenses/mit-license.php
 
 From http://www.lshift.net/blog/2008/10/29/toy-raytracer-in-python
+
+Migrated to mypyc by Jukka Lehtosalo.
 """
 
 import array
