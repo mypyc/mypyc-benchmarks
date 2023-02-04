@@ -26,10 +26,7 @@ from typing_extensions import Final
 
 from benchmarking import benchmark
 
-
-# The JS variant implements "OrderedCollection", which basically completely
-# overlaps with ``list``. So we'll cheat. :D
-OrderedCollection = list
+from mypy_extensions import i64
 
 
 # HOORAY FOR GLOBALS... Oh wait.
@@ -38,29 +35,29 @@ planner: Optional[Planner] = None
 
 
 class Strength(object):
-    def __init__(self, strength: int, name: str) -> None:
+    def __init__(self, strength: i64, name: str) -> None:
         super(Strength, self).__init__()
         self.strength = strength
         self.name = name
 
-    @classmethod
-    def stronger(cls, s1: Strength, s2: Strength) -> bool:
+    @staticmethod
+    def stronger(s1: Strength, s2: Strength) -> bool:
         return s1.strength < s2.strength
 
-    @classmethod
-    def weaker(cls, s1: Strength, s2: Strength) -> bool:
+    @staticmethod
+    def weaker(s1: Strength, s2: Strength) -> bool:
         return s1.strength > s2.strength
 
-    @classmethod
-    def weakest_of(cls, s1: Strength, s2: Strength) -> Strength:
-        if cls.weaker(s1, s2):
+    @staticmethod
+    def weakest_of(s1: Strength, s2: Strength) -> Strength:
+        if Strength.weaker(s1, s2):
             return s1
 
         return s2
 
-    @classmethod
-    def strongest(cls, s1: Strength, s2: Strength) -> Strength:
-        if cls.stronger(s1, s2):
+    @staticmethod
+    def strongest(s1: Strength, s2: Strength) -> Strength:
+        if Strength.stronger(s1, s2):
             return s1
 
         return s2
@@ -100,7 +97,7 @@ class Constraint(object):
         assert planner is not None
         planner.incremental_add(self)
 
-    def satisfy(self, mark: int) -> Optional[Constraint]:
+    def satisfy(self, mark: i64) -> Optional[Constraint]:
         global planner
         self.choose_method(mark)
 
@@ -166,15 +163,15 @@ class Constraint(object):
         raise NotImplementedError
 
     @abstractmethod
-    def choose_method(self, mark: int) -> None:
+    def choose_method(self, mark: i64) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def inputs_known(self, mark: int) -> bool:
+    def inputs_known(self, mark: i64) -> bool:
         raise NotImplementedError
 
 
@@ -190,7 +187,7 @@ class UrnaryConstraint(Constraint):
         self.my_output.add_constraint(self)
         self.satisfied = False
 
-    def choose_method(self, mark: int) -> None:
+    def choose_method(self, mark: i64) -> None:
         if self.my_output.mark != mark and \
            Strength.stronger(self.strength, self.my_output.walk_strength):
             self.satisfied = True
@@ -200,7 +197,7 @@ class UrnaryConstraint(Constraint):
     def is_satisfied(self) -> bool:
         return self.satisfied
 
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         # No-ops.
         pass
 
@@ -219,7 +216,7 @@ class UrnaryConstraint(Constraint):
     def mark_unsatisfied(self) -> None:
         self.satisfied = False
 
-    def inputs_known(self, mark: int) -> bool:
+    def inputs_known(self, mark: i64) -> bool:
         return True
 
     def remove_from_graph(self) -> None:
@@ -264,10 +261,10 @@ class BinaryConstraint(Constraint):
         super(BinaryConstraint, self).__init__(strength)
         self.v1 = v1
         self.v2 = v2
-        self.direction = Direction.NONE
+        self.direction: i64 = Direction.NONE
         self.add_constraint()
 
-    def choose_method(self, mark: int) -> None:
+    def choose_method(self, mark: i64) -> None:
         if self.v1.mark == mark:
             if self.v2.mark != mark and Strength.stronger(self.strength, self.v2.walk_strength):
                 self.direction = Direction.FORWARD
@@ -299,7 +296,7 @@ class BinaryConstraint(Constraint):
     def is_satisfied(self) -> bool:
         return self.direction != Direction.NONE
 
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         self.input().mark = mark
 
     def input(self) -> Variable:
@@ -327,7 +324,7 @@ class BinaryConstraint(Constraint):
     def mark_unsatisfied(self) -> None:
         self.direction = Direction.NONE
 
-    def inputs_known(self, mark: int) -> bool:
+    def inputs_known(self, mark: i64) -> bool:
         i = self.input()
         return i.mark == mark or i.stay or i.determined_by is None
 
@@ -364,7 +361,7 @@ class ScaleConstraint(BinaryConstraint):
         if self.offset is not None:
             self.offset.remove_constraint(self)
 
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         super(ScaleConstraint, self).mark_inputs(mark)
         self.scale.mark = mark
         self.offset.mark = mark
@@ -395,13 +392,13 @@ class EqualityConstraint(BinaryConstraint):
 
 class Variable(object):
 
-    def __init__(self, name: str, initial_value: float = 0) -> None:
+    def __init__(self, name: str, initial_value: float) -> None:  # TODO: = 0 default
         super(Variable, self).__init__()
         self.name = name
         self.value = initial_value
-        self.constraints: List[Constraint] = OrderedCollection()
+        self.constraints: List[Constraint] = []
         self.determined_by: Optional[Constraint] = None
-        self.mark = 0
+        self.mark: i64 = 0
         self.walk_strength = WEAKEST
         self.stay = True
 
@@ -426,7 +423,7 @@ class Planner(object):
 
     def __init__(self) -> None:
         super(Planner, self).__init__()
-        self.current_mark = 0
+        self.current_mark: i64 = 0
 
     def incremental_add(self, constraint: Constraint) -> None:
         mark = self.new_mark()
@@ -453,7 +450,7 @@ class Planner(object):
 
             repeat = strength != WEAKEST
 
-    def new_mark(self) -> int:
+    def new_mark(self) -> i64:
         self.current_mark += 1
         return self.current_mark
 
@@ -473,7 +470,7 @@ class Planner(object):
         return plan
 
     def extract_plan_from_constraints(self, constraints: Iterable[Constraint]) -> Plan:
-        sources = OrderedCollection()
+        sources = []
 
         for c in constraints:
             if c.is_input() and c.is_satisfied():
@@ -481,8 +478,8 @@ class Planner(object):
 
         return self.make_plan(sources)
 
-    def add_propagate(self, c: Constraint, mark: int) -> bool:
-        todo = OrderedCollection()
+    def add_propagate(self, c: Constraint, mark: i64) -> bool:
+        todo = []
         todo.append(c)
 
         while len(todo):
@@ -501,8 +498,8 @@ class Planner(object):
         out.determined_by = None
         out.walk_strength = WEAKEST
         out.stay = True
-        unsatisfied = OrderedCollection()
-        todo = OrderedCollection()
+        unsatisfied = []
+        todo = []
         todo.append(out)
 
         while len(todo):
@@ -545,7 +542,7 @@ class Plan(object):
     def __len__(self) -> int:
         return len(self.v)
 
-    def __getitem__(self, index: int) -> Constraint:
+    def __getitem__(self, index: i64) -> Constraint:
         return self.v[index]
 
     def execute(self) -> None:
@@ -555,7 +552,7 @@ class Plan(object):
 
 # Main
 
-def chain_test(n: int) -> None:
+def chain_test(n: i64) -> None:
     """
     This is the standard DeltaBlue benchmark. A long chain of equality
     constraints is constructed with a stay constraint on one end. An
@@ -574,9 +571,9 @@ def chain_test(n: int) -> None:
     prev: Optional[Variable] = None
 
     # We need to go up to n inclusively.
-    for i in range(n + 1):
+    for i in range(i64(n + 1)):
         name = "v%s" % i
-        v = Variable(name)
+        v = Variable(name, 0.0)
 
         if prev is not None:
             EqualityConstraint(prev, v, REQUIRED)
@@ -591,7 +588,7 @@ def chain_test(n: int) -> None:
 
     StayConstraint(last, STRONG_DEFAULT)
     edit = EditConstraint(first, PREFERRED)
-    edits = OrderedCollection()
+    edits = []
     edits.append(edit)
     plan = planner.extract_plan_from_constraints(edits)
 
@@ -599,7 +596,7 @@ def chain_test(n: int) -> None:
         first.value = float(i)
         plan.execute()
 
-        if last.value != i:
+        if last.value != j:
             print("Chain test failed.")
 
 
@@ -615,7 +612,7 @@ def projection_test(n: int) -> None:
     scale = Variable("scale", 10)
     offset = Variable("offset", 1000)
 
-    dests = OrderedCollection()
+    dests = []
 
     for i in range(n):
         src = Variable("src%s" % i, i)
@@ -651,7 +648,7 @@ def projection_test(n: int) -> None:
 def change(v: Variable, new_value: float) -> None:
     global planner
     edit = EditConstraint(v, PREFERRED)
-    edits = OrderedCollection()
+    edits = []
     edits.append(edit)
 
     assert planner is not None
@@ -664,7 +661,7 @@ def change(v: Variable, new_value: float) -> None:
     edit.destroy_constraint()
 
 
-def run_delta_blue(n: int) -> None:
+def run_delta_blue(n: i64) -> None:
     chain_test(n)
     projection_test(n)
 
