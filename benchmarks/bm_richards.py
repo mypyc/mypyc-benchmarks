@@ -12,7 +12,9 @@ based on a Java version:
 
 from __future__ import print_function
 from typing import List, Optional, cast
+
 from typing_extensions import Final
+from mypy_extensions import i64
 
 from six.moves import xrange
 
@@ -40,12 +42,12 @@ BUFSIZE_RANGE: Final = range(BUFSIZE)
 
 class Packet(object):
 
-    def __init__(self, l: Optional['Packet'], i: int, k: int) -> None:
+    def __init__(self, l: Optional['Packet'], i: i64, k: i64) -> None:
         self.link = l
         self.ident = i
         self.kind = k
-        self.datum = 0
-        self.data = [0] * BUFSIZE
+        self.datum: i64 = 0
+        self.data: List[i64] = [0] * BUFSIZE
 
     def append_to(self, lst: Optional['Packet']) -> 'Packet':
         self.link = None
@@ -76,8 +78,8 @@ class DeviceTaskRec(TaskRec):
 class IdleTaskRec(TaskRec):
 
     def __init__(self) -> None:
-        self.control = 1
-        self.count = 10000
+        self.control: i64 = 1
+        self.count: i64 = 10000
 
 
 class HandlerTaskRec(TaskRec):
@@ -98,8 +100,8 @@ class HandlerTaskRec(TaskRec):
 class WorkerTaskRec(TaskRec):
 
     def __init__(self) -> None:
-        self.destination = I_HANDLERA
-        self.count = 0
+        self.destination: i64 = I_HANDLERA
+        self.count: i64 = 0
 # Task
 
 
@@ -173,8 +175,8 @@ class TaskWorkArea(object):
 
         self.taskList: Optional[Task] = None
 
-        self.holdCount = 0
-        self.qpktCount = 0
+        self.holdCount: i64 = 0
+        self.qpktCount: i64 = 0
 
 
 taskWorkArea: Final = TaskWorkArea()
@@ -182,7 +184,7 @@ taskWorkArea: Final = TaskWorkArea()
 
 class Task(TaskState):
 
-    def __init__(self, i: int, p: int, w: Optional[Packet], initialState: TaskState,
+    def __init__(self, i: i64, p: i64, w: Optional[Packet], initialState: TaskState,
                  r: TaskRec) -> None:
         self.link = taskWorkArea.taskList
         self.ident = i
@@ -234,7 +236,7 @@ class Task(TaskState):
         self.task_holding = True
         return self.link
 
-    def release(self, i: int) -> 'Task':
+    def release(self, i: i64) -> 'Task':
         t = self.findtcb(i)
         t.task_holding = False
         if t.priority > self.priority:
@@ -249,7 +251,7 @@ class Task(TaskState):
         pkt.ident = self.ident
         return t.addPacket(pkt, self)
 
-    def findtcb(self, id: int) -> 'Task':
+    def findtcb(self, id: i64) -> 'Task':
         t = taskWorkArea.taskTab[id]
         if t is None:
             raise Exception("Bad task id %d" % id)
@@ -261,7 +263,7 @@ class Task(TaskState):
 
 class DeviceTask(Task):
 
-    def __init__(self, i: int, p: int, w: Optional[Packet], s: TaskState,
+    def __init__(self, i: i64, p: i64, w: Optional[Packet], s: TaskState,
                  r: DeviceTaskRec) -> None:
         Task.__init__(self, i, p, w, s, r)
 
@@ -283,7 +285,7 @@ class DeviceTask(Task):
 
 class HandlerTask(Task):
 
-    def __init__(self, i: int, p: int, w: Optional[Packet], s: TaskState,
+    def __init__(self, i: i64, p: i64, w: Optional[Packet], s: TaskState,
                  r: HandlerTaskRec) -> None:
         Task.__init__(self, i, p, w, s, r)
 
@@ -316,7 +318,7 @@ class HandlerTask(Task):
 
 class IdleTask(Task):
 
-    def __init__(self, i: int, p: int, w: int, s: TaskState,
+    def __init__(self, i: i64, p: i64, w: i64, s: TaskState,
                  r: IdleTaskRec) -> None:
         Task.__init__(self, i, 0, None, s, r)
 
@@ -336,12 +338,12 @@ class IdleTask(Task):
 # WorkTask
 
 
-A: Final = ord('A')
+A: Final[i64] = ord('A')
 
 
 class WorkTask(Task):
 
-    def __init__(self, i: int, p: int, w: Optional[Packet], s: TaskState,
+    def __init__(self, i: i64, p: i64, w: Optional[Packet], s: TaskState,
                  r: WorkerTaskRec) -> None:
         Task.__init__(self, i, p, w, s, r)
 
@@ -350,6 +352,7 @@ class WorkTask(Task):
         if pkt is None:
             return self.waitTask()
 
+        dest: i64
         if w.destination == I_HANDLERA:
             dest = I_HANDLERB
         else:
@@ -359,11 +362,13 @@ class WorkTask(Task):
         pkt.ident = dest
         pkt.datum = 0
 
-        for i in BUFSIZE_RANGE:  # xrange(BUFSIZE)
+        i: i64 = 0
+        while i < BUFSIZE:
             w.count += 1
             if w.count > 26:
                 w.count = 1
             pkt.data[i] = A + w.count - 1
+            i += 1
 
         return self.qpkt(pkt)
 
@@ -384,7 +389,7 @@ def schedule() -> None:
 
 class Richards(object):
 
-    def run(self, iterations: int) -> bool:
+    def run(self, iterations: i64) -> bool:
         for i in xrange(iterations):
             taskWorkArea.holdCount = 0
             taskWorkArea.qpktCount = 0
