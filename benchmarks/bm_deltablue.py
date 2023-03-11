@@ -396,7 +396,7 @@ class EqualityConstraint(BinaryConstraint):
 
 class Variable(object):
 
-    def __init__(self, name: str, initial_value: float) -> None:  # TODO: = 0 default
+    def __init__(self, name: str, initial_value: float = 0) -> None:
         super(Variable, self).__init__()
         self.name = name
         self.value = initial_value
@@ -596,8 +596,8 @@ def chain_test(n: i64) -> None:
     edits.append(edit)
     plan = planner.extract_plan_from_constraints(edits)
 
-    for i in range(100):
-        first.value = float(i)
+    for j in range(100):
+        first.value = float(j)
         plan.execute()
 
         if last.value != j:
@@ -659,7 +659,7 @@ def change(v: Variable, new_value: float) -> None:
     plan = planner.extract_plan_from_constraints(edits)
 
     for i in range(10):
-        v.value = new_value
+        v.value = float(new_value)
         plan.execute()
 
     edit.destroy_constraint()
