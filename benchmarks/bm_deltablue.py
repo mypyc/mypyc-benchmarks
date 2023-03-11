@@ -23,10 +23,14 @@ from abc import abstractmethod
 from typing import Optional, Iterable, List
 
 from typing_extensions import Final
+from mypy_extensions import i64
 
 from benchmarking import benchmark
 
-from mypy_extensions import i64
+
+# The JS variant implements "OrderedCollection", which basically completely
+# overlaps with ``list``. So we'll cheat. :D
+OrderedCollection = list
 
 
 # HOORAY FOR GLOBALS... Oh wait.
@@ -40,24 +44,24 @@ class Strength(object):
         self.strength = strength
         self.name = name
 
-    @staticmethod
-    def stronger(s1: Strength, s2: Strength) -> bool:
+    @classmethod
+    def stronger(cls, s1: Strength, s2: Strength) -> bool:
         return s1.strength < s2.strength
 
-    @staticmethod
-    def weaker(s1: Strength, s2: Strength) -> bool:
+    @classmethod
+    def weaker(cls, s1: Strength, s2: Strength) -> bool:
         return s1.strength > s2.strength
 
-    @staticmethod
-    def weakest_of(s1: Strength, s2: Strength) -> Strength:
-        if Strength.weaker(s1, s2):
+    @classmethod
+    def weakest_of(cls, s1: Strength, s2: Strength) -> Strength:
+        if cls.weaker(s1, s2):
             return s1
 
         return s2
 
-    @staticmethod
-    def strongest(s1: Strength, s2: Strength) -> Strength:
-        if Strength.stronger(s1, s2):
+    @classmethod
+    def strongest(cls, s1: Strength, s2: Strength) -> Strength:
+        if cls.stronger(s1, s2):
             return s1
 
         return s2
@@ -396,7 +400,7 @@ class Variable(object):
         super(Variable, self).__init__()
         self.name = name
         self.value = initial_value
-        self.constraints: List[Constraint] = []
+        self.constraints: List[Constraint] = OrderedCollection()
         self.determined_by: Optional[Constraint] = None
         self.mark: i64 = 0
         self.walk_strength = WEAKEST
@@ -470,7 +474,7 @@ class Planner(object):
         return plan
 
     def extract_plan_from_constraints(self, constraints: Iterable[Constraint]) -> Plan:
-        sources = []
+        sources = OrderedCollection()
 
         for c in constraints:
             if c.is_input() and c.is_satisfied():
@@ -479,7 +483,7 @@ class Planner(object):
         return self.make_plan(sources)
 
     def add_propagate(self, c: Constraint, mark: i64) -> bool:
-        todo = []
+        todo = OrderedCollection()
         todo.append(c)
 
         while len(todo):
@@ -498,8 +502,8 @@ class Planner(object):
         out.determined_by = None
         out.walk_strength = WEAKEST
         out.stay = True
-        unsatisfied = []
-        todo = []
+        unsatisfied = OrderedCollection()
+        todo = OrderedCollection()
         todo.append(out)
 
         while len(todo):
@@ -588,7 +592,7 @@ def chain_test(n: i64) -> None:
 
     StayConstraint(last, STRONG_DEFAULT)
     edit = EditConstraint(first, PREFERRED)
-    edits = []
+    edits = OrderedCollection()
     edits.append(edit)
     plan = planner.extract_plan_from_constraints(edits)
 
@@ -612,7 +616,7 @@ def projection_test(n: int) -> None:
     scale = Variable("scale", 10)
     offset = Variable("offset", 1000)
 
-    dests = []
+    dests = OrderedCollection()
 
     for i in range(n):
         src = Variable("src%s" % i, i)
@@ -648,7 +652,7 @@ def projection_test(n: int) -> None:
 def change(v: Variable, new_value: float) -> None:
     global planner
     edit = EditConstraint(v, PREFERRED)
-    edits = []
+    edits = OrderedCollection()
     edits.append(edit)
 
     assert planner is not None
