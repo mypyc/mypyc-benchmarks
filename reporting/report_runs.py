@@ -39,8 +39,11 @@ def gen_data_for_benchmark(baselines: List[DataItem],
             else:
                 perf = '**error**'
         else:
-            change = 100.0 * (prev_runtime / item.runtime - 1.0)
-            perf = '%.2fs' % item.runtime
+            if item.runtime != 0.0:
+                change = 100.0 * (prev_runtime / item.runtime - 1.0)
+                perf = '%.2fs' % item.runtime
+            else:
+                perf = '**error**'
         if (
             is_significant_percent_change(item.benchmark, change, is_microbenchmark)
             and change != -100.0
