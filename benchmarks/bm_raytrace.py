@@ -259,7 +259,7 @@ class Scene:
         self.lightPoints: list[Point] = []
         self.position = Point(0, 1.8, 10)
         self.lookingAt = Point_ZERO
-        self.fieldOfView: float = 45
+        self.fieldOfView: float = 45.0
         self.recursionDepth = 0
 
     def moveTo(self, p: Point) -> None:
@@ -363,7 +363,7 @@ class SimpleSurface(Surface):
             c = addColours(c, self.specularCoefficient, reflectedColour)
 
         if self.lambertCoefficient > 0:
-            lambertAmount: float = 0
+            lambertAmount: float = 0.0
             for lightPoint in scene.visibleLights(p):
                 contribution = (lightPoint - p).normalized().dot(normal)
                 if contribution > 0:
