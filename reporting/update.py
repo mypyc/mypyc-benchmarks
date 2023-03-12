@@ -47,7 +47,7 @@ def heading(*args: object) -> None:
 
 def run(cmd: List[str], cwd: str) -> int:
     if not dry_run:
-        return subprocess.check_call(cmd, cwd=cwd)
+        return subprocess.check_call(cmd, cwd=cwd, stderr=subprocess.STDOUT)
     else:
         if os.path.abspath(cwd) != os.getcwd():
             print('> cd %s' % cwd)
@@ -104,7 +104,7 @@ def collect_new_benchmarks(data_repo: str) -> List[str]:
     for benchmark in new_benchmarks_missing_baselines:
         baseline_fnam = baseline_csv_path(data_repo, benchmark)
         heading('Collecting baseline for new benchmark "%s"' % benchmark)
-        cmd = ['python', '-m', 'reporting.collect_baseline', benchmark, data_repo]
+        cmd = ['python', '-u', '-m', 'reporting.collect_baseline', benchmark, data_repo]
         run(cmd, cwd=benchmarks_repo)
         if not dry_run:
             assert os.path.isfile(baseline_fnam)
@@ -143,14 +143,14 @@ def get_commits_without_results(mypy_repo: str, data_repo: str) -> List[str]:
 
 def run_benchmark(commit: str, benchmark: str, mypy_repo: str, data_repo: str) -> None:
     log('Running benchmark "%s" against mypy commit %s' % (benchmark, commit))
-    cmd = ['python', '-m', 'reporting.collect',
+    cmd = ['python', '-u', '-m', 'reporting.collect',
            benchmark, mypy_repo, data_repo, '%s~1' % commit, commit]
     run(cmd, cwd=benchmarks_repo)
 
 
 def generate_reports(mypy_repo: str, data_repo: str) -> None:
     heading('Generating reports')
-    run(['python', '-m', 'reporting.genreports', mypy_repo, data_repo], cwd=benchmarks_repo)
+    run(['python', '-u', '-m', 'reporting.genreports', mypy_repo, data_repo], cwd=benchmarks_repo)
 
 
 def commit(data_repo: str, new_benchmarks: List[str]) -> None:
