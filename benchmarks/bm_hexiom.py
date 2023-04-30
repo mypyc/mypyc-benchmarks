@@ -14,7 +14,9 @@ from __future__ import division, print_function
 from typing import Dict, Any, Optional, List, Tuple, cast, IO
 
 from typing_extensions import Final
-from six.moves import xrange, StringIO
+from mypy_extensions import i64
+
+from six.moves import StringIO
 from six import u as u_lit, text_type
 
 from benchmarking import benchmark
@@ -26,7 +28,7 @@ DEFAULT_LEVEL = 25
 ##################################
 class Dir(object):
 
-    def __init__(self, x: int, y: int) -> None:
+    def __init__(self, x: i64, y: i64) -> None:
         self.x = x
         self.y = y
 
@@ -51,86 +53,86 @@ class Done(object):
     MAX_NEIGHBORS_STRATEGY: Final = 4
     MIN_NEIGHBORS_STRATEGY: Final = 5
 
-    def __init__(self, count: int, cells: Optional[List[List[int]]] = None) -> None:
+    def __init__(self, count: i64, cells: Optional[List[List[i64]]] = None) -> None:
         self.count = count
-        self.cells = cells if cells is not None else [
-            [0, 1, 2, 3, 4, 5, 6, EMPTY] for i in xrange(count)]
+        self.cells: List[List[i64]] = cells if cells is not None else [
+            [0, 1, 2, 3, 4, 5, 6, EMPTY] for i in range(count)]
 
     def clone(self) -> 'Done':
-        return Done(self.count, [self.cells[i][:] for i in xrange(self.count)])
+        return Done(self.count, [self.cells[i][:] for i in range(self.count)])
 
-    def __getitem__(self, i: int) -> List[int]:
+    def __getitem__(self, i: i64) -> List[i64]:
         return self.cells[i]
 
-    def set_done(self, i: int, v: int) -> None:
+    def set_done(self, i: i64, v: i64) -> None:
         self.cells[i] = [v]
 
-    def already_done(self, i: int) -> bool:
+    def already_done(self, i: i64) -> bool:
         return len(self.cells[i]) == 1
 
-    def remove(self, i: int, v: int) -> bool:
+    def remove(self, i: i64, v: i64) -> bool:
         if v in self.cells[i]:
             self.cells[i].remove(v)
             return True
         else:
             return False
 
-    def remove_all(self, v: int) -> None:
-        for i in xrange(self.count):
+    def remove_all(self, v: i64) -> None:
+        for i in range(self.count):
             self.remove(i, v)
 
-    def remove_unfixed(self, v: int) -> bool:
+    def remove_unfixed(self, v: i64) -> bool:
         changed = False
-        for i in xrange(self.count):
+        for i in range(self.count):
             if not self.already_done(i):
                 if self.remove(i, v):
                     changed = True
         return changed
 
-    def filter_tiles(self, tiles: List[int]) -> None:
-        for v in xrange(8):
+    def filter_tiles(self, tiles: List[i64]) -> None:
+        for v in range(i64(8)):
             if tiles[v] == 0:
                 self.remove_all(v)
 
-    def next_cell_min_choice(self) -> int:
-        minlen = 10
-        mini = -1
-        for i in xrange(self.count):
+    def next_cell_min_choice(self) -> i64:
+        minlen: i64 = 10
+        mini: i64 = -1
+        for i in range(self.count):
             if 1 < len(self.cells[i]) < minlen:
                 minlen = len(self.cells[i])
                 mini = i
         return mini
 
-    def next_cell_max_choice(self) -> int:
-        maxlen = 1
-        maxi = -1
-        for i in xrange(self.count):
+    def next_cell_max_choice(self) -> i64:
+        maxlen: i64 = 1
+        maxi: i64 = -1
+        for i in range(self.count):
             if maxlen < len(self.cells[i]):
                 maxlen = len(self.cells[i])
                 maxi = i
         return maxi
 
-    def next_cell_highest_value(self) -> int:
-        maxval = -1
-        maxi = -1
-        for i in xrange(self.count):
+    def next_cell_highest_value(self) -> i64:
+        maxval: i64 = -1
+        maxi: i64 = -1
+        for i in range(self.count):
             if (not self.already_done(i)):
-                maxvali = max(k for k in self.cells[i] if k != EMPTY)
+                maxvali: i64 = max(k for k in self.cells[i] if k != EMPTY)
                 if maxval < maxvali:
                     maxval = maxvali
                     maxi = i
         return maxi
 
-    def next_cell_first(self) -> int:
-        for i in xrange(self.count):
+    def next_cell_first(self) -> i64:
+        for i in range(self.count):
             if (not self.already_done(i)):
                 return i
         return -1
 
-    def next_cell_max_neighbors(self, pos: 'Pos') -> int:
-        maxn = -1
-        maxi = -1
-        for i in xrange(self.count):
+    def next_cell_max_neighbors(self, pos: 'Pos') -> i64:
+        maxn: i64 = -1
+        maxi: i64 = -1
+        for i in range(self.count):
             if not self.already_done(i):
                 cells_around = pos.hex.get_by_id(i).links
                 n = sum(1 if (self.already_done(nid) and (self[nid][0] != EMPTY)) else 0
@@ -140,10 +142,10 @@ class Done(object):
                     maxi = i
         return maxi
 
-    def next_cell_min_neighbors(self, pos: 'Pos') -> int:
-        minn = 7
-        mini = -1
-        for i in xrange(self.count):
+    def next_cell_min_neighbors(self, pos: 'Pos') -> i64:
+        minn: i64 = 7
+        mini: i64 = -1
+        for i in range(self.count):
             if not self.already_done(i):
                 cells_around = pos.hex.get_by_id(i).links
                 n = sum(1 if (self.already_done(nid) and (self[nid][0] != EMPTY)) else 0
@@ -153,7 +155,7 @@ class Done(object):
                     mini = i
         return mini
 
-    def next_cell(self, pos: 'Pos', strategy: int = HIGHEST_VALUE_STRATEGY) -> int:
+    def next_cell(self, pos: 'Pos', strategy: i64 = HIGHEST_VALUE_STRATEGY) -> i64:
         if strategy == Done.HIGHEST_VALUE_STRATEGY:
             return self.next_cell_highest_value()
         elif strategy == Done.MIN_CHOICE_STRATEGY:
@@ -174,7 +176,7 @@ class Done(object):
 
 class Node(object):
 
-    def __init__(self, pos: Tuple[int, int], id: int, links: List[int]) -> None:
+    def __init__(self, pos: Tuple[i64, i64], id: i64, links: List[i64]) -> None:
         self.pos = pos
         self.id = id
         self.links = links
@@ -184,21 +186,21 @@ class Node(object):
 
 class Hex(object):
 
-    def __init__(self, size: int) -> None:
-        self.size = size
-        self.count = 3 * size * (size - 1) + 1
+    def __init__(self, size: i64) -> None:
+        self.size: i64 = size
+        self.count: i64 = 3 * size * (size - 1) + 1
         self.nodes_by_id: List[Optional[Node]] = [None] * self.count
         self.nodes_by_pos = {}
-        id = 0
-        for y in xrange(size):
-            for x in xrange(size + y):
+        id: i64 = 0
+        for y in range(size):
+            for x in range(size + y):
                 pos = (x, y)
                 node = Node(pos, id, [])
                 self.nodes_by_pos[pos] = node
                 self.nodes_by_id[node.id] = node
                 id += 1
-        for y in xrange(1, size):
-            for x in xrange(y, size * 2 - 1):
+        for y in range(1, size):
+            for x in range(y, size * 2 - 1):
                 ry = size + y - 1
                 pos = (x, ry)
                 node = Node(pos, id, [])
@@ -216,13 +218,13 @@ class Hex(object):
                 if self.contains_pos((nx, ny)):
                     node.links.append(self.nodes_by_pos[(nx, ny)].id)
 
-    def contains_pos(self, pos: Tuple[int, int]) -> bool:
+    def contains_pos(self, pos: Tuple[i64, i64]) -> bool:
         return pos in self.nodes_by_pos
 
-    def get_by_pos(self, pos: Tuple[int, int]) -> Node:
+    def get_by_pos(self, pos: Tuple[i64, i64]) -> Node:
         return self.nodes_by_pos[pos]
 
-    def get_by_id(self, id: int) -> Node:
+    def get_by_id(self, id: i64) -> Node:
         node = self.nodes_by_id[id]
         return cast(Node, node)
 
@@ -230,7 +232,7 @@ class Hex(object):
 ##################################
 class Pos(object):
 
-    def __init__(self, hex: Hex, tiles: List[int], done: Optional[Done] = None) -> None:
+    def __init__(self, hex: Hex, tiles: List[i64], done: Optional[Done] = None) -> None:
         self.hex = hex
         self.tiles = tiles
         self.done = Done(hex.count) if done is None else done
@@ -241,18 +243,18 @@ class Pos(object):
 ##################################
 
 
-def constraint_pass(pos: Pos, last_move: Optional[int] = None) -> bool:
+def constraint_pass(pos: Pos, last_move: Optional[i64] = None) -> bool:
     changed = False
     left = pos.tiles[:]
     done = pos.done
 
     # Remove impossible values from free cells
-    free_cells = (range(done.count) if last_move is None
-                  else pos.hex.get_by_id(last_move).links)
+    free_cells: List[i64] = (list(range(done.count)) if last_move is None
+                             else pos.hex.get_by_id(last_move).links)
     for i in free_cells:
         if not done.already_done(i):
-            vmax = 0
-            vmin = 0
+            vmax: i64 = 0
+            vmin: i64 = 0
             cells_around = pos.hex.get_by_id(i).links
             for nid in cells_around:
                 if done.already_done(nid):
@@ -262,7 +264,7 @@ def constraint_pass(pos: Pos, last_move: Optional[int] = None) -> bool:
                 else:
                     vmax += 1
 
-            for num in xrange(7):
+            for num in range(i64(7)):
                 if (num < vmin) or (num > vmax):
                     if done.remove(i, num):
                         changed = True
@@ -273,7 +275,7 @@ def constraint_pass(pos: Pos, last_move: Optional[int] = None) -> bool:
         if len(cell) == 1:
             left[cell[0]] -= 1
 
-    for v in xrange(8):
+    for v in range(i64(8)):
         # If there is none, remove the possibility from all tiles
         if (pos.tiles[v] > 0) and (left[v] == 0):
             if done.remove_unfixed(v):
@@ -283,21 +285,21 @@ def constraint_pass(pos: Pos, last_move: Optional[int] = None) -> bool:
             # If the number of possible cells for a value is exactly the number of available tiles
             # put a tile in each cell
             if pos.tiles[v] == possible:
-                for i in xrange(done.count):
+                for i in range(done.count):
                     cell = done.cells[i]
                     if (not done.already_done(i)) and (v in cell):
                         done.set_done(i, v)
                         changed = True
 
     # Force empty or non-empty around filled cells
-    filled_cells = (range(done.count) if last_move is None
-                    else [last_move])
+    filled_cells: List[i64] = (list(range(done.count)) if last_move is None
+                               else [last_move])
     for i in filled_cells:
         if done.already_done(i):
             num = done[i][0]
-            empties = 0
-            filled = 0
-            unknown = []
+            empties: i64 = 0
+            filled: i64 = 0
+            unknown: List[i64] = []
             cells_around = pos.hex.get_by_id(i).links
             for nid in cells_around:
                 if done.already_done(nid):
@@ -327,7 +329,7 @@ ASCENDING: Final = 1
 DESCENDING: Final = -1
 
 
-def find_moves(pos: Pos, strategy: int, order: int) -> List[Tuple[int, int]]:
+def find_moves(pos: Pos, strategy: i64, order: i64) -> List[Tuple[i64, i64]]:
     done = pos.done
     cell_id = done.next_cell(pos, strategy)
     if cell_id < 0:
@@ -344,7 +346,7 @@ def find_moves(pos: Pos, strategy: int, order: int) -> List[Tuple[int, int]]:
         return moves
 
 
-def play_move(pos: Pos, move: Tuple[int, int]) -> None:
+def play_move(pos: Pos, move: Tuple[i64, i64]) -> None:
     (cell_id, i) = move
     pos.done.set_done(cell_id, i)
 
@@ -353,9 +355,9 @@ def print_pos(pos: Pos, output: IO[str]) -> None:
     hex = pos.hex
     done = pos.done
     size = hex.size
-    for y in xrange(size):
+    for y in range(size):
         print(u_lit(" ") * (size - y - 1), end=u_lit(""), file=output)
-        for x in xrange(size + y):
+        for x in range(size + y):
             pos2 = (x, y)
             id = hex.get_by_pos(pos2).id
             if done.already_done(id):
@@ -365,9 +367,9 @@ def print_pos(pos: Pos, output: IO[str]) -> None:
                 c = u_lit("?")
             print(u_lit("%s ") % c, end=u_lit(""), file=output)
         print(end=u_lit("\n"), file=output)
-    for y in xrange(1, size):
+    for y in range(1, size):
         print(u_lit(" ") * y, end=u_lit(""), file=output)
-        for x in xrange(y, size * 2 - 1):
+        for x in range(y, size * 2 - 1):
             ry = size + y - 1
             pos2 = (x, ry)
             id = hex.get_by_pos(pos2).id
@@ -385,22 +387,22 @@ SOLVED: Final = 1
 IMPOSSIBLE: Final = -1
 
 
-def solved(pos: Pos, output: StringIO, verbose: bool = False) -> int:
+def solved(pos: Pos, output: StringIO, verbose: bool = False) -> i64:
     hex = pos.hex
     tiles = pos.tiles[:]
     done = pos.done
     exact = True
     all_done = True
-    for i in xrange(hex.count):
+    for i in range(hex.count):
         if len(done[i]) == 0:
             return IMPOSSIBLE
         elif done.already_done(i):
-            num = done[i][0]
+            num: i64 = done[i][0]
             tiles[num] -= 1
             if (tiles[num] < 0):
                 return IMPOSSIBLE
-            vmax = 0
-            vmin = 0
+            vmax: i64 = 0
+            vmin: i64 = 0
             if num != EMPTY:
                 cells_around = hex.get_by_id(i).links
                 for nid in cells_around:
@@ -425,7 +427,7 @@ def solved(pos: Pos, output: StringIO, verbose: bool = False) -> int:
     return SOLVED
 
 
-def solve_step(prev: Pos, strategy: int, order: int, output: StringIO, first: bool = False) -> int:
+def solve_step(prev: Pos, strategy: i64, order: i64, output: StringIO, first: bool = False) -> i64:
     if first:
         pos = prev.clone()
         while constraint_pass(pos):
@@ -439,7 +441,7 @@ def solve_step(prev: Pos, strategy: int, order: int, output: StringIO, first: bo
     else:
         for move in moves:
             # print("Trying (%d, %d)" % (move[0], move[1]))
-            ret = OPEN
+            ret: i64 = OPEN
             new_pos = pos.clone()
             play_move(new_pos, move)
             # print_pos(new_pos, sys.stdout)
@@ -459,8 +461,8 @@ def check_valid(pos: Pos) -> None:
     hex = pos.hex
     tiles = pos.tiles
     # fill missing entries in tiles
-    tot = 0
-    for i in xrange(8):
+    tot: i64 = 0
+    for i in range(i64(8)):
         if tiles[i] > 0:
             tot += tiles[i]
         else:
@@ -471,7 +473,7 @@ def check_valid(pos: Pos) -> None:
             "Invalid input. Expected %d tiles, got %d." % (hex.count, tot))
 
 
-def solve(pos: Pos, strategy: int, order: int, output: StringIO) -> object:
+def solve(pos: Pos, strategy: i64, order: i64, output: StringIO) -> object:
     check_valid(pos)
     return solve_step(pos, strategy, order, output, first=True)
 
@@ -485,14 +487,14 @@ def read_file(file: str) -> Pos:
     linei = 1
     tiles = 8 * [0]
     done = Done(hex.count)
-    for y in xrange(size):
+    for y in range(size):
         line = lines[linei][size - y - 1:]
         p = 0
-        for x in xrange(size + y):
+        for x in range(size + y):
             tile = line[p:p + 2]
             p += 2
             if tile[1] == ".":
-                inctile = EMPTY
+                inctile: i64 = EMPTY
             else:
                 inctile = int(tile)
             tiles[inctile] += 1
@@ -503,11 +505,11 @@ def read_file(file: str) -> Pos:
                 done.set_done(hex.get_by_pos((x, y)).id, inctile)
 
         linei += 1
-    for y in xrange(1, size):
+    for y in range(1, size):
         ry = size - 1 + y
         line = lines[linei][y:]
         p = 0
-        for x in xrange(y, size * 2 - 1):
+        for x in range(y, size * 2 - 1):
             tile = line[p:p + 2]
             p += 2
             if tile[1] == ".":
@@ -526,7 +528,7 @@ def read_file(file: str) -> Pos:
     return Pos(hex, tiles, done)
 
 
-def solve_file(file: str, strategy: int, order: int, output: StringIO) -> None:
+def solve_file(file: str, strategy: i64, order: i64, output: StringIO) -> None:
     pos = read_file(file)
     solve(pos, strategy, order, output)
 
@@ -628,7 +630,7 @@ LEVELS[36] = ("""
 """)
 
 
-def main(loops: int, level: int) -> None:
+def main(loops: i64, level: i64) -> None:
     board, solution = LEVELS[level]
     order = DESCENDING
     strategy = Done.FIRST_STRATEGY
@@ -638,7 +640,7 @@ def main(loops: int, level: int) -> None:
     board = board.strip()
     expected = solution.rstrip()
 
-    range_it = xrange(loops)
+    range_it = range(loops)
 
     for _ in range_it:
         stream = StringIO()
