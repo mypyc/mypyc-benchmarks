@@ -23,6 +23,7 @@ from abc import abstractmethod
 from typing import Optional, Iterable, List
 
 from typing_extensions import Final
+from mypy_extensions import i64
 
 from benchmarking import benchmark
 
@@ -38,7 +39,7 @@ planner: Optional[Planner] = None
 
 
 class Strength(object):
-    def __init__(self, strength: int, name: str) -> None:
+    def __init__(self, strength: i64, name: str) -> None:
         super(Strength, self).__init__()
         self.strength = strength
         self.name = name
@@ -100,7 +101,7 @@ class Constraint(object):
         assert planner is not None
         planner.incremental_add(self)
 
-    def satisfy(self, mark: int) -> Optional[Constraint]:
+    def satisfy(self, mark: i64) -> Optional[Constraint]:
         global planner
         self.choose_method(mark)
 
@@ -166,15 +167,15 @@ class Constraint(object):
         raise NotImplementedError
 
     @abstractmethod
-    def choose_method(self, mark: int) -> None:
+    def choose_method(self, mark: i64) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def inputs_known(self, mark: int) -> bool:
+    def inputs_known(self, mark: i64) -> bool:
         raise NotImplementedError
 
 
@@ -190,7 +191,7 @@ class UrnaryConstraint(Constraint):
         self.my_output.add_constraint(self)
         self.satisfied = False
 
-    def choose_method(self, mark: int) -> None:
+    def choose_method(self, mark: i64) -> None:
         if self.my_output.mark != mark and \
            Strength.stronger(self.strength, self.my_output.walk_strength):
             self.satisfied = True
@@ -200,7 +201,7 @@ class UrnaryConstraint(Constraint):
     def is_satisfied(self) -> bool:
         return self.satisfied
 
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         # No-ops.
         pass
 
@@ -219,7 +220,7 @@ class UrnaryConstraint(Constraint):
     def mark_unsatisfied(self) -> None:
         self.satisfied = False
 
-    def inputs_known(self, mark: int) -> bool:
+    def inputs_known(self, mark: i64) -> bool:
         return True
 
     def remove_from_graph(self) -> None:
@@ -264,10 +265,10 @@ class BinaryConstraint(Constraint):
         super(BinaryConstraint, self).__init__(strength)
         self.v1 = v1
         self.v2 = v2
-        self.direction = Direction.NONE
+        self.direction: i64 = Direction.NONE
         self.add_constraint()
 
-    def choose_method(self, mark: int) -> None:
+    def choose_method(self, mark: i64) -> None:
         if self.v1.mark == mark:
             if self.v2.mark != mark and Strength.stronger(self.strength, self.v2.walk_strength):
                 self.direction = Direction.FORWARD
@@ -299,7 +300,7 @@ class BinaryConstraint(Constraint):
     def is_satisfied(self) -> bool:
         return self.direction != Direction.NONE
 
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         self.input().mark = mark
 
     def input(self) -> Variable:
@@ -327,7 +328,7 @@ class BinaryConstraint(Constraint):
     def mark_unsatisfied(self) -> None:
         self.direction = Direction.NONE
 
-    def inputs_known(self, mark: int) -> bool:
+    def inputs_known(self, mark: i64) -> bool:
         i = self.input()
         return i.mark == mark or i.stay or i.determined_by is None
 
@@ -364,7 +365,7 @@ class ScaleConstraint(BinaryConstraint):
         if self.offset is not None:
             self.offset.remove_constraint(self)
 
-    def mark_inputs(self, mark: int) -> None:
+    def mark_inputs(self, mark: i64) -> None:
         super(ScaleConstraint, self).mark_inputs(mark)
         self.scale.mark = mark
         self.offset.mark = mark
@@ -401,7 +402,7 @@ class Variable(object):
         self.value = initial_value
         self.constraints: List[Constraint] = OrderedCollection()
         self.determined_by: Optional[Constraint] = None
-        self.mark = 0
+        self.mark: i64 = 0
         self.walk_strength = WEAKEST
         self.stay = True
 
@@ -426,7 +427,7 @@ class Planner(object):
 
     def __init__(self) -> None:
         super(Planner, self).__init__()
-        self.current_mark = 0
+        self.current_mark: i64 = 0
 
     def incremental_add(self, constraint: Constraint) -> None:
         mark = self.new_mark()
@@ -453,7 +454,7 @@ class Planner(object):
 
             repeat = strength != WEAKEST
 
-    def new_mark(self) -> int:
+    def new_mark(self) -> i64:
         self.current_mark += 1
         return self.current_mark
 
@@ -481,7 +482,7 @@ class Planner(object):
 
         return self.make_plan(sources)
 
-    def add_propagate(self, c: Constraint, mark: int) -> bool:
+    def add_propagate(self, c: Constraint, mark: i64) -> bool:
         todo = OrderedCollection()
         todo.append(c)
 
@@ -545,7 +546,7 @@ class Plan(object):
     def __len__(self) -> int:
         return len(self.v)
 
-    def __getitem__(self, index: int) -> Constraint:
+    def __getitem__(self, index: i64) -> Constraint:
         return self.v[index]
 
     def execute(self) -> None:
@@ -555,7 +556,7 @@ class Plan(object):
 
 # Main
 
-def chain_test(n: int) -> None:
+def chain_test(n: i64) -> None:
     """
     This is the standard DeltaBlue benchmark. A long chain of equality
     constraints is constructed with a stay constraint on one end. An
@@ -574,7 +575,7 @@ def chain_test(n: int) -> None:
     prev: Optional[Variable] = None
 
     # We need to go up to n inclusively.
-    for i in range(n + 1):
+    for i in range(i64(n + 1)):
         name = "v%s" % i
         v = Variable(name)
 
@@ -595,11 +596,11 @@ def chain_test(n: int) -> None:
     edits.append(edit)
     plan = planner.extract_plan_from_constraints(edits)
 
-    for i in range(100):
-        first.value = float(i)
+    for j in range(100):
+        first.value = float(j)
         plan.execute()
 
-        if last.value != i:
+        if last.value != j:
             print("Chain test failed.")
 
 
@@ -658,13 +659,13 @@ def change(v: Variable, new_value: float) -> None:
     plan = planner.extract_plan_from_constraints(edits)
 
     for i in range(10):
-        v.value = new_value
+        v.value = float(new_value)
         plan.execute()
 
     edit.destroy_constraint()
 
 
-def run_delta_blue(n: int) -> None:
+def run_delta_blue(n: i64) -> None:
     chain_test(n)
     projection_test(n)
 
