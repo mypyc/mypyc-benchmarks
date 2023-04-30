@@ -577,7 +577,7 @@ def chain_test(n: i64) -> None:
     # We need to go up to n inclusively.
     for i in range(i64(n + 1)):
         name = "v%s" % i
-        v = Variable(name, 0.0)
+        v = Variable(name)
 
         if prev is not None:
             EqualityConstraint(prev, v, REQUIRED)
