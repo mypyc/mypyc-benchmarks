@@ -37,7 +37,7 @@ def eval_AtA_times_u(u: List[float]) -> List[float]:
 
 def part_A_times_u(i_u: Tuple[int, List[float]]) -> float:
     i, u = i_u
-    partial_sum: float = 0
+    partial_sum: float = 0.0
     for j, u_j in enumerate(u):
         partial_sum += eval_A(i, j) * u_j
     return partial_sum
@@ -45,7 +45,7 @@ def part_A_times_u(i_u: Tuple[int, List[float]]) -> float:
 
 def part_At_times_u(i_u: Tuple[int, List[float]]) -> float:
     i, u = i_u
-    partial_sum: float = 0
+    partial_sum: float = 0.0
     for j, u_j in enumerate(u):
         partial_sum += eval_A(j, i) * u_j
     return partial_sum
