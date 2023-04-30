@@ -596,7 +596,7 @@ def chain_test(n: int) -> None:
     plan = planner.extract_plan_from_constraints(edits)
 
     for i in range(100):
-        first.value = i
+        first.value = float(i)
         plan.execute()
 
         if last.value != i:
@@ -648,7 +648,7 @@ def projection_test(n: int) -> None:
             print("Projection 4 failed")
 
 
-def change(v: Variable, new_value: int) -> None:
+def change(v: Variable, new_value: float) -> None:
     global planner
     edit = EditConstraint(v, PREFERRED)
     edits = OrderedCollection()
