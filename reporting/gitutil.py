@@ -52,13 +52,13 @@ def filter_commits_by_path(repo_dir: str, commits: List[str], prefix: str) -> Li
 
 
 def get_commit_times(repo_dir: str, commits: List[str]) -> Dict[str, Tuple[str, str]]:
-    cmd = ['git', 'show', '--numstat', '--date=unix'] + commits
+    cmd = ['git', 'show', '--numstat', '--pretty=fuller', '--date=unix'] + commits
     output = subprocess.check_output(cmd, cwd=repo_dir).decode("latin1")
     result = {}
     for line in output.splitlines():
         if line.startswith('commit '):
             commit = line.split()[1]
-        if line.startswith('Date: '):
+        if line.startswith('CommitDate: '):
             timestamp = int(line.split()[1])
             dt = datetime.utcfromtimestamp(timestamp)
             result[commit] = split_datetime(dt)
