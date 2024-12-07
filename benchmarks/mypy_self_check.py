@@ -63,6 +63,9 @@ def prepare(mypy_repo: str | None) -> None:
     reqs = os.path.join(mypy_repo, 'build-requirements.txt')
     subprocess.run([pip, 'install', '-r', reqs], check=True)
 
+    # TODO: Remove if/when setuptools is added to build-requirements.txt
+    subprocess.run([pip, 'install', 'setuptools'], check=True)
+
     log('cloning mypy')
     subprocess.run(['git', 'clone', mypy_repo, MYPY_CLONE], check=True)
 
