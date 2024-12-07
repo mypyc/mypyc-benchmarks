@@ -41,6 +41,11 @@ CHECK_REQUIREMENTS = [
 ]
 
 
+def log(s: str) -> None:
+    print(s)
+    sys.stdout.flush()
+
+
 def prepare(mypy_repo: str | None) -> None:
     assert mypy_repo
     assert os.path.isdir(mypy_repo)
@@ -49,18 +54,18 @@ def prepare(mypy_repo: str | None) -> None:
     if os.path.isdir(TMPDIR):
         shutil.rmtree(TMPDIR)
 
-    print(f'creating venv in {os.path.abspath(VENV_DIR)}')
+    log(f'creating venv in {os.path.abspath(VENV_DIR)}')
     subprocess.run([sys.executable, '-m', 'venv', VENV_DIR], check=True)
 
-    print('installing build dependencies')
+    log('installing build dependencies')
     pip = os.path.join(VENV_DIR, 'bin', 'pip')
     reqs = os.path.join(mypy_repo, 'build-requirements.txt')
     subprocess.run([pip, 'install', '-r', reqs], check=True)
 
-    print('cloning mypy')
+    log('cloning mypy')
     subprocess.run(['git', 'clone', mypy_repo, MYPY_CLONE], check=True)
 
-    print('building and installing mypy')
+    log('building and installing mypy')
     env = os.environ.copy()
     env["CC"] = "clang"
     # Use -O2 since it's a bit faster to compile. The runtimes might be also be more
@@ -77,15 +82,15 @@ def prepare(mypy_repo: str | None) -> None:
         env=env,
     )
 
-    print('verifying that we can run mypy')
+    log('verifying that we can run mypy')
     out = subprocess.run([os.path.join(VENV_DIR, 'bin', 'mypy'), '--version'], capture_output=True,
                          text=True, check=True, env=env)
     assert 'compiled: no' not in out.stdout
 
-    print('installing dependencies for type checking')
+    log('installing dependencies for type checking')
     subprocess.run([VENV_PYTHON, '-m', 'pip', 'install'] + CHECK_REQUIREMENTS, check=True, env=env)
 
-    print('successfully installed compiled mypy')
+    log('successfully installed compiled mypy')
 
 
 @benchmark(
