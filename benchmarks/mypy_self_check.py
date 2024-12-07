@@ -59,6 +59,7 @@ def prepare(mypy_repo: str | None) -> None:
 
     log('installing build dependencies')
     pip = os.path.join(VENV_DIR, 'bin', 'pip')
+    subprocess.run([pip, 'install', '-U', 'pip'], check=True)
     reqs = os.path.join(mypy_repo, 'build-requirements.txt')
     subprocess.run([pip, 'install', '-r', reqs], check=True)
 
