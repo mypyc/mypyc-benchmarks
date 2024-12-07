@@ -42,8 +42,8 @@ CHECK_REQUIREMENTS = [
 
 
 def log(s: str) -> None:
-    print(s)
-    sys.stdout.flush()
+    sys.stderr.write(f'{s}\n')
+    sys.stderr.flush()
 
 
 def prepare(mypy_repo: str | None) -> None:
