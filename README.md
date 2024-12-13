@@ -21,11 +21,11 @@ all mypyc and mypy commits:
 
 Prerequisites:
 
-* Python 3.7 or later on Linux, macOS, or Windows
+* Python 3.8 or later on Linux, macOS, or Windows
 * `venv` installed (`python3-venv` on Ubuntu)
-* `mypyc` in `PATH`
 * A working Python C development environment
-* A python environment with mypy test-requirements.txt installed
+* Cloned mypy git repository
+* A Python environment with mypy test-requirements.txt installed
 
 Display the names of available benchmarks using `runbench.py --list`:
 
