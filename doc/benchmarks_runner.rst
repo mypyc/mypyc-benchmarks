@@ -65,10 +65,17 @@ the Python that is distributed with Ubuntu, if it's recent enough.
 Update venv in ``/srv/venv`` to use the new Python version. See
 ``scripts/configure-server.sh`` for how it's configured.
 
-Next collect new baselines (TODO: how). This also acts as a basic
-sanity check to make sure that benchmarks still work.
+Next collect new baselines on the server:
 
-Commit and push new baselines.
+* ``sudo su`` (the script must be run as root)
+* ``cd /srv/mypyc-benchmarks``
+* ``bash scripts/collect_all_baselines.sh``
+* The script should output ``<< success >>`` when complete
+* ``exit``
+* Commit and push new baselines under ``/srv/mypyc-benchmark-results``
+
+This also acts as a basic sanity check to make sure that benchmarks
+still work.
 
 Finally, re-enable the cron:
 

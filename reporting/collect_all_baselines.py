@@ -1,11 +1,6 @@
 """Utility to collect new baselines for all benchmarks.
 
-Run this to collect baselines after a Python version, operating system
-or hardware upgrade.
-
-Usage:
-
-  python3 -m reporting.collect_all_baselines <data-repo-dir>
+Normally this shouldn't be run directly -- use scripts/collect_all_baselines.sh.
 """
 
 import argparse
