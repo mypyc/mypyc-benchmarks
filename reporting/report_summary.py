@@ -1,7 +1,7 @@
 """Generate report containing summary of multiple benchmarks."""
 
 from typing import Dict, List, Tuple, NamedTuple, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import os
 
 from reporting.data import DataItem, find_baseline, BenchmarkData, is_significant_percent_change
@@ -30,7 +30,7 @@ def gen_summary_data(benchmarks: List[str],
             # Probably a compiled-only benchmark, for which we don't include in the summary
             # for now
             continue
-        three_months_ago = datetime.utcnow() - timedelta(days=30 * 3)
+        three_months_ago = datetime.now(UTC) - timedelta(days=30 * 3)
         old_item = find_item_at_time(runs[benchmark], three_months_ago, commit_times)
         old_baseline = find_baseline(baselines[benchmark], old_item)
         assert old_baseline, f'baseline missing for {benchmark!r}'

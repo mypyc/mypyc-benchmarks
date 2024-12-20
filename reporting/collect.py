@@ -4,7 +4,7 @@ Run "python3 -m reporting.collect --help" for more information.
 """
 
 from typing import Optional, Tuple
-from datetime import datetime
+from datetime import datetime, UTC
 import argparse
 import os
 import subprocess
@@ -121,7 +121,7 @@ def main() -> None:
     benchmark_commit = get_current_commit(".")
     for i, mypy_commit in enumerate(mypy_commits):
         print('-- %s %d/%d --' % (benchmark, i + 1, len(mypy_commits)))
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         checkout_commit(mypy_repo, mypy_commit)
         sync_typeshed(mypy_repo)
         install_mypy_deps(mypy_repo)

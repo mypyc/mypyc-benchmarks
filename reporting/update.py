@@ -15,7 +15,7 @@ This does several things:
 """
 
 from typing import List, Tuple
-from datetime import datetime
+from datetime import datetime, UTC
 import argparse
 import os
 import subprocess
@@ -35,7 +35,7 @@ dry_run = False
 
 
 def log(*args: object) -> None:
-    print('[%s]' % datetime.utcnow(), *args)
+    print('[%s]' % datetime.now(UTC), *args)
     sys.stdout.flush()
 
 

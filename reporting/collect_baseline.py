@@ -4,7 +4,7 @@ Run "python3 -m reporting.collect_baseline --help" for more information.
 """
 
 from typing import Tuple
-from datetime import datetime
+from datetime import datetime, UTC
 import argparse
 
 from reporting.common import get_csv_path
@@ -29,7 +29,7 @@ def parse_args() -> Tuple[str, str]:
 
 def main() -> None:
     benchmark, data_repo = parse_args()
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     benchmark_commit = get_current_commit(".")
     runtime, stddev = run_bench(benchmark, None, compiled=False)
     fnam = get_csv_path(data_repo, benchmark, cpython=True)
