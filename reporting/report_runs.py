@@ -19,29 +19,34 @@ class BenchmarkItem(NamedTuple):
 
 def gen_data_for_benchmark(baselines: List[DataItem],
                            runs: List[DataItem],
+                           commit_order: Dict[str, int],
                            commit_dates: Dict[str, Tuple[str, str]],
                            is_microbenchmark: bool) -> List[BenchmarkItem]:
     """Generate data for each run of a single benchmark."""
     result = []
-    prev_runtime = 0.0
-    prev_baseline_runtime = 0.0
+    prev_adjusted_runtime = 0.0
+
+    newest_item = min(runs, key=lambda x: commit_order[x.mypy_commit])
+    new_baseline = find_baseline(baselines, newest_item)
+
     for item in reversed(runs):
         baseline = find_baseline(baselines, item)
         perf_change = ''
         change = 0.0
-        if baseline:
-            if prev_runtime and item.runtime != 0.0:
-                change = 100.0 * ((baseline.runtime / item.runtime) /
-                                  (prev_baseline_runtime / prev_runtime) - 1.0)
-            if item.runtime != 0.0:
-                relative = baseline.runtime / item.runtime
+        if baseline and new_baseline:
+            adjusted_runtime = item.runtime * (new_baseline.runtime / baseline.runtime)
+            if prev_adjusted_runtime != 0.0 and adjusted_runtime != 0.0:
+                change = 100.0 * (prev_adjusted_runtime / adjusted_runtime - 1.0)
+            if adjusted_runtime != 0.0:
+                relative = new_baseline.runtime / adjusted_runtime
                 perf = '%.2fx' % relative
             else:
                 perf = '**error**'
         else:
-            if item.runtime != 0.0:
-                change = 100.0 * (prev_runtime / item.runtime - 1.0)
-                perf = '%.2fs' % item.runtime
+            adjusted_runtime = item.runtime
+            if adjusted_runtime != 0.0:
+                change = 100.0 * (prev_adjusted_runtime / adjusted_runtime - 1.0)
+                perf = '%.2fs' % adjusted_runtime
             else:
                 perf = '**error**'
         if (
@@ -56,9 +61,7 @@ def gen_data_for_benchmark(baselines: List[DataItem],
             mypy_commit=item.mypy_commit,
         )
         result.append(new_item)
-        prev_runtime = item.runtime
-        if baseline:
-            prev_baseline_runtime = baseline.runtime
+        prev_adjusted_runtime = adjusted_runtime
     return list(reversed(result))
 
 
@@ -97,6 +100,7 @@ def gen_reports_for_benchmarks(data: BenchmarkData,
         items = gen_data_for_benchmark(
             data.baselines.get(benchmark, []),
             runs,
+            commit_order,
             commit_dates,
             is_microbenchmark,
         )
