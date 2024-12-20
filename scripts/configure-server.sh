@@ -29,6 +29,11 @@ fi
 
 set -eux
 
+apt install git pkg-config python3 python3-dev build-essential clang gdb lcov \
+      libbz2-dev libffi-dev libgdbm-dev libgdbm-compat-dev liblzma-dev \
+      libncurses5-dev libreadline6-dev libsqlite3-dev libssl-dev \
+      lzma lzma-dev uuid-dev zlib1g-dev
+
 if [ ! -d $base ]; then
     echo "Setting up $base"
     mkdir $base
