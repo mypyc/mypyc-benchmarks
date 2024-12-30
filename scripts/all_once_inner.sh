@@ -17,7 +17,7 @@ source $base/venv/bin/activate
 
 cd $base/mypyc-benchmarks
 
-for benchmark in $(python runtests.py --list --raw); do
+for benchmark in $(python runbench.py --list --raw); do
     python -m reporting.collect "$benchmark" $base/mypy $base/mypyc-benchmark-results "$commit~1" "$commit"
 done
 
