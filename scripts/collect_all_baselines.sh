@@ -2,8 +2,7 @@
 
 # Script that collects new baselines for all benchmarks. Run as root.
 #
-# Run this to collect baselines after a Python version, operating system
-# or hardware upgrade.
+# Run this to collect baselines after a Python version or hardware upgrade.
 #
 # See doc/benchmarks_runner.rst for more information.
 

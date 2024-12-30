@@ -11,11 +11,15 @@ set -eux
 
 base=/srv
 
+commit="$1"
+
 source $base/venv/bin/activate
 
 cd $base/mypyc-benchmarks
 
-python -m reporting.collect_all_baselines $base/mypyc-benchmark-results
+for benchmark in $(python runtests.py --list --raw); do
+    python -m reporting.collect "$benchmark" $base/mypy $base/mypyc-benchmark-results "$commit~1" "$commit"
+done
 
 echo "<< success >>"
 echo
