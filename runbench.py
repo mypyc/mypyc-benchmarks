@@ -262,10 +262,11 @@ def main() -> None:
     if args.is_list:
         for benchmark in sorted(benchmarks):
             suffix = ''
-            if benchmark.module.startswith('microbenchmarks.'):
-                suffix += ' (micro)'
-            if benchmark.compiled_only:
-                suffix += ' (compiled only)'
+            if not args.raw:
+                if benchmark.module.startswith('microbenchmarks.'):
+                    suffix += ' (micro)'
+                if benchmark.compiled_only:
+                    suffix += ' (compiled only)'
             print(benchmark.name + suffix)
         sys.exit(0)
 
