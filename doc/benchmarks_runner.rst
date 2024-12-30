@@ -29,6 +29,11 @@ to newer hardware. Here the main complication is that we want to avoid
 a discontinuity in benchmark timings so that we can track long-term
 trends over upgrades.
 
+Note that when you upgrade to a newer Ubuntu release, currently you'll
+also need to upgrade the hardware or Python as well at the same time,
+or there will be a discontinuity in measurements. Normally you'd
+upgrade to a newer Python version at least.
+
 Re-running old measurements using a newer OS/Python/hardware isn't
 practical, since old mypy revisions generally don't work on newer
 Python versions. Additionally, re-running measurements would take too
