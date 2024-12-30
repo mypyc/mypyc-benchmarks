@@ -68,7 +68,7 @@ if [ ! -d $base/venv ]; then
     cat > /tmp/venv.sh <<EOF
 virtualenv -p python3 $base/venv
 source $base/venv/bin/activate
-pip install typing_extensions six attrs mypy_extensions
+pip install typing_extensions six attrs mypy_extensions types-six
 EOF
     sudo -u $user bash /tmp/venv.sh
 fi
