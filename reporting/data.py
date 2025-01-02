@@ -244,6 +244,7 @@ def normalize_data(data: BenchmarkData, current_py: str, current_hw: str) -> Non
         if scaling is None:
             # No scaling information available
             continue
+        scaling = add_inferred_scaling_items(scaling)
         seen_commits = set()
         new_runs = []
         for run in runs:
@@ -267,3 +268,54 @@ def normalize_data(data: BenchmarkData, current_py: str, current_hw: str) -> Non
                     break
             new_runs.append(run)
         runs[:] = new_runs
+
+
+def add_inferred_scaling_items(items: List[ScalingItem]) -> List[ScalingItem]:
+    pairs = set()
+    for item in items:
+        pairs.add((item.old_hardware_id, item.old_python_version,
+                   item.new_hardware_id, item.new_python_version))
+    old_configs = []
+    for item in items:
+        old = (item.old_hardware_id, item.old_python_version)
+        if old not in old_configs:
+            old_configs.append(old)
+
+    new_config = None
+    for item in items:
+        new = (item.new_hardware_id, item.new_python_version)
+        if new not in old_configs:
+            assert new_config is None, "couldn't determine unique newest config"
+            new_config = new
+
+    assert new_config is not None, "couldn't determine newest config"
+    inferred_items = []
+    for item in items:
+        t = (item.old_hardware_id, item.old_python_version,
+             new_config[0], new_config[1])
+        if t not in pairs:
+            inferred_item = infer_scaling_item(
+                items, item.old_hardware_id, item.old_python_version,
+                new_config[0], new_config[1],
+            )
+            inferred_items.append(inferred_item)
+            pairs.add(t)
+
+    return items + inferred_items
+
+
+def infer_scaling_item(items: List[ScalingItem],
+                       old_hw: str,
+                       old_py: str,
+                       new_hw: str,
+                       new_py: str) -> ScalingItem:
+    for item in items:
+        if item.old_hardware_id == old_hw and item.old_python_version == old_py:
+            if item.new_hardware_id == new_hw and item.new_python_version == new_py:
+                return item
+            first = infer_scaling_item(items, old_hw, old_py,
+                                       item.new_hardware_id, item.new_python_version)
+            second = infer_scaling_item(items, item.new_hardware_id, item.new_python_version,
+                                        new_hw, new_py)
+            return ScalingItem(first.factor * second.factor, old_hw, old_py, new_hw, new_py)
+    raise RuntimeError("could not find scaling from {old_hw}/{old_py} to {new_hw}/{new_py}")
