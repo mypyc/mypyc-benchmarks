@@ -82,12 +82,34 @@ Next collect new baselines on the server:
 This also acts as a basic sanity check to make sure that benchmarks
 still work.
 
+Collect a compiled measurement that matches the baselines, using the
+the most recent mypy commit that has was measured using the previous
+configuration. This allows the calculation of scaling factors between
+the old and new configurations:
+
+* ``sudo su``
+* ``cd /srv/mypyc-benchmarks``
+* ``bash scripts/measure_all_once.sh <mypy-commit>``
+* The script should output ``<< success >>`` when complete
+* ``exit``
+* Commit and push new baselines under ``/srv/mypyc-benchmark-results``
+
+Calculate scaling factors for each benchmark, between the old and new
+configurations::
+
+   python3 -m reporting.scaling <mypy-hash> /srv/mypyc-benchmark-results \
+      <old-hardware> <old-python> <new-hardware> <new-python> >> \
+      /srv/mypyc-benchmark-results/data/scaling.csv
+
+The above doesn't need to be done on the benchmarks runner.
+
 Finally, re-enable the cron:
 
 * ``sudo su``
 * ``crontab -e``
 * Uncomment the cron job
 
-Push an empty commit to the mypy repo and check that it is measured
-correctly (once the cron job runs), and there is no abrupt change in
-reported performance for the empty commit.
+Push an empty commit to the mypy repo if there are no pending commits,
+and check that it is measured correctly (once the cron job runs), and
+there is no abrupt change in reported performance for the empty
+commit.
