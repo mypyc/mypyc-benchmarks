@@ -257,7 +257,7 @@ def normalize_data(data: BenchmarkData, current_py: str, current_hw: str) -> Non
                 if (run.hardware_id == scale_item.old_hardware_id
                         and run.python_version.startswith(scale_item.old_python_version)
                         and scale_item.new_hardware_id == current_hw
-                        and scale_item.new_python_version == current_py):
+                        and scale_item.new_python_version.startswith(current_py)):
                     run = DataItem(benchmark=run.benchmark,
                                    timestamp=run.timestamp,
                                    runtime=run.runtime / scale_item.factor,
