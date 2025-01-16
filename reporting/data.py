@@ -141,7 +141,9 @@ def load_scaling_data(data_repo: str) -> Dict[str, List[ScalingItem]]:
     result: Dict[str, List[ScalingItem]] = {}
     for line in lines:
         benchmark, factor, old_hw, old_py, new_hw, new_py = line.strip().split(',')
-        item = ScalingItem(float(factor), old_hw, old_py, new_hw, new_py)
+        item = ScalingItem(float(factor),
+                           old_hw, norm_py_version(old_py),
+                           new_hw, norm_py_version(new_py))
         result.setdefault(benchmark, []).append(item)
     return result
 
@@ -268,6 +270,11 @@ def normalize_data(data: BenchmarkData, current_py: str, current_hw: str) -> Non
                     break
             new_runs.append(run)
         runs[:] = new_runs
+
+
+def norm_py_version(v: str) -> str:
+    """Normalize Python version string from e.g. '3.13.1' -> '3.13'."""
+    return ".".join(v.split(".")[:2])
 
 
 def add_inferred_scaling_items(items: List[ScalingItem]) -> List[ScalingItem]:
