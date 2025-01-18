@@ -21,7 +21,7 @@ all mypyc and mypy commits:
 
 Prerequisites:
 
-* Python 3.8 or later on Linux, macOS, or Windows
+* Python 3.9 or later on Linux, macOS, or Windows
 * `venv` installed (`python3-venv` on Ubuntu)
 * A working Python C development environment
 * Cloned mypy git repository (in addition to mypyc-benchmarks repository)
