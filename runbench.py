@@ -57,7 +57,7 @@ def parse_elapsed_time(output: bytes) -> float:
 
 
 def smoothen(a: list[float]) -> list[float]:
-    # Keep the lowest half of values
+    # Remove (at most) one third of the slowest runs (these are likely outliers).
     return sorted(a)[: 2 * (len(a) + 1) // 3]
 
 
