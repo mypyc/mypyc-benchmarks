@@ -102,7 +102,7 @@ def prepare(mypy_repo: str | None) -> None:
     prepare=prepare,
     compiled_only=True,
     min_iterations=30,
-    strip_outlier_runs=False,
+    strip_outlier_runs=True,
     stable_hash_seed=True,
 )
 def mypy_self_check() -> None:
