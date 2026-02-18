@@ -84,7 +84,8 @@ def run_benchmark(benchmark: BenchmarkInfo,
     if benchmark.prepare:
         if not raw_output:
             print('preparing %s' % benchmark.name)
-        benchmark.prepare(mypy_repo)
+        for prepare_func in benchmark.prepare:
+            prepare_func(mypy_repo)
 
     if not raw_output:
         print('running %s' % benchmark.name)

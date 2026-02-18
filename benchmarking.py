@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, NamedTuple, Callable, TypeVar
+from typing import List, NamedTuple, Callable, Sequence, TypeVar
 import time
 
 
@@ -19,8 +19,8 @@ class BenchmarkInfo(NamedTuple):
     name: str
     module: str
     perform: Callable[[BenchmarkContext], object]
-    # Argument is path to mypy repo we are benchmarking
-    prepare: Callable[[str | None], None] | None
+    # Each argument is path to mypy repo we are benchmarking
+    prepare: list[Callable[[str | None], None]]
     compiled_only: bool
     min_iterations: int | None
     strip_outlier_runs: bool
@@ -33,9 +33,16 @@ benchmarks: List[BenchmarkInfo] = []
 T = TypeVar("T")
 
 
+PrepareArg = (
+    Callable[[str | None], None]
+    | Sequence[Callable[[str | None], None]]
+    | None
+)
+
+
 def benchmark(
         *,
-        prepare: Callable[[str | None], None] | None = None,
+        prepare: PrepareArg = None,
         compiled_only: bool = False,
         min_iterations: int | None = None,
         strip_outlier_runs: bool = True,
@@ -44,6 +51,7 @@ def benchmark(
 
     Args:
         prepare: If given, called once before running the benchmark to set up external state.
+            Can be a single callable or a list of callables (called in order).
             This does not run in the same process as the actual benchmark so it's mostly useful
             for setting up file system state, data files, etc.
         compiled_only: This benchmark only runs in compiled mode (no interpreted mode).
@@ -52,6 +60,12 @@ def benchmark(
         stable_hash_seed: If True, use predictable hash seed in CPython (it still varies
             between runs, but it's not random)
     """
+    if prepare is None:
+        prepare_list: list[Callable[[str | None], None]] = []
+    elif callable(prepare):
+        prepare_list = [prepare]
+    else:
+        prepare_list = list(prepare)
 
     def outer_wrapper(func: Callable[[], T]) -> Callable[[], T]:
         name = func_name(func)
@@ -63,7 +77,7 @@ def benchmark(
             name,
             func.__module__,
             wrapper,
-            prepare,
+            prepare_list,
             compiled_only,
             min_iterations,
             strip_outlier_runs,
@@ -82,7 +96,7 @@ def benchmark_with_context(
     if name.startswith('__mypyc_'):
         name = name.replace('__mypyc_', '')
         name = name.replace('_decorator_helper__', '')
-    benchmark = BenchmarkInfo(name, func.__module__, func, None, False, None, True, False)
+    benchmark = BenchmarkInfo(name, func.__module__, func, [], False, None, True, False)
     benchmarks.append(benchmark)
     return func
 
