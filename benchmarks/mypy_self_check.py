@@ -12,6 +12,7 @@ copy, in case it starts generating many errors, etc.
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -46,10 +47,62 @@ def log(s: str) -> None:
     sys.stderr.flush()
 
 
+def get_mypy_repo_commit(mypy_repo: str) -> str:
+    result = subprocess.run(
+        ['git', 'rev-parse', 'HEAD'],
+        cwd=mypy_repo,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+def get_installed_mypy_version(env: dict[str, str] | None = None) -> str | None:
+    """Run mypy --version and return the output, or None on failure."""
+    mypy_bin = os.path.join(VENV_DIR, 'bin', 'mypy')
+    if env is None:
+        env = os.environ.copy()
+        env.pop('PYTHONPATH', None)
+        env.pop('MYPYPATH', None)
+    try:
+        out = subprocess.run(
+            [mypy_bin, '--version'],
+            capture_output=True,
+            text=True,
+            check=True,
+            env=env,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+    return out.stdout.strip()
+
+
+def is_cached_build_valid(mypy_repo: str) -> bool:
+    """Check if there's an existing compiled mypy matching the current repo commit."""
+    version_str = get_installed_mypy_version()
+    if version_str is None:
+        return False
+    if 'compiled: no' in version_str:
+        return False
+    # Extract the commit hash baked into the compiled version string.
+    # Example: "mypy 1.20.0+dev.00b5064fd... (compiled: yes)"
+    m = re.search(r'\+dev\.([0-9a-f]+)', version_str)
+    if not m:
+        return False
+    installed_commit = m.group(1)
+    repo_commit = get_mypy_repo_commit(mypy_repo)
+    return repo_commit.startswith(installed_commit) or installed_commit.startswith(repo_commit)
+
+
 def prepare(mypy_repo: str | None) -> None:
     assert mypy_repo
     assert os.path.isdir(mypy_repo)
     assert os.path.isdir(os.path.join(mypy_repo, '.git'))
+
+    if is_cached_build_valid(mypy_repo):
+        log('reusing cached compiled mypy build')
+        return
 
     if os.path.isdir(TMPDIR):
         shutil.rmtree(TMPDIR)
