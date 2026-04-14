@@ -110,14 +110,14 @@ def prepare(mypy_repo: str | None) -> None:
     log(f'creating venv in {os.path.abspath(VENV_DIR)}')
     subprocess.run([sys.executable, '-m', 'venv', VENV_DIR], check=True)
 
-    log('installing build dependencies')
+    log('installing dependencies')
     pip = os.path.join(VENV_DIR, 'bin', 'pip')
     subprocess.run([pip, 'install', '-U', 'pip'], check=True)
 
-    # TODO: Remove if/when setuptools is added to build-requirements.txt
+    # TODO: Remove if/when setuptools is added to test-requirements.txt
     subprocess.run([pip, 'install', '-U', 'setuptools'], check=True)
 
-    reqs = os.path.join(mypy_repo, 'build-requirements.txt')
+    reqs = os.path.join(mypy_repo, 'test-requirements.txt')
     subprocess.run([pip, 'install', '-r', reqs], check=True)
 
     log('cloning mypy')
