@@ -49,6 +49,8 @@ def gen_data_for_benchmark(baselines: List[DataItem],
             and change != -100.0
         ):
             perf_change = '%+.1f%%' % change
+            if item.benchmark_commit != baseline.benchmark_commit:
+                perf_change += "*"
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
             perf=perf,
