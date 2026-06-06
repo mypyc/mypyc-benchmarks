@@ -18,6 +18,8 @@ from io import StringIO
 from typing_extensions import Final
 from mypy_extensions import i64
 
+from librt.vecs import vec, append, remove
+
 from benchmarking import benchmark
 
 # 2016-07-07: CPython 3.6 takes ~25 ms to solve the board level 25
@@ -32,16 +34,18 @@ class Dir(object):
         self.y = y
 
 
-DIRS: Final = [Dir(1, 0),
-               Dir(-1, 0),
-               Dir(0, 1),
-               Dir(0, -1),
-               Dir(1, 1),
-               Dir(-1, -1)]
+DIRS: Final = vec[Dir]([Dir(1, 0),
+                        Dir(-1, 0),
+                        Dir(0, 1),
+                        Dir(0, -1),
+                        Dir(1, 1),
+                        Dir(-1, -1)])
 
 EMPTY: Final = 7
 
 ##################################
+
+EMPTY_CELLS: Final = vec[vec[i64]]()
 
 
 class Done(object):
@@ -52,26 +56,31 @@ class Done(object):
     MAX_NEIGHBORS_STRATEGY: Final = 4
     MIN_NEIGHBORS_STRATEGY: Final = 5
 
-    def __init__(self, count: i64, cells: list[list[i64]] | None= None) -> None:
+    def __init__(self, count: i64, cells: vec[vec[i64]] = EMPTY_CELLS) -> None:
         self.count = count
-        self.cells: list[list[i64]] = cells if cells is not None else [
-            [0, 1, 2, 3, 4, 5, 6, EMPTY] for i in range(count)]
+        self.cells = (
+            cells if len(cells) else vec[vec[i64]](
+                [
+                    vec[i64]([0, 1, 2, 3, 4, 5, 6, EMPTY]) for i in range(count)
+                ]
+            )
+        )
 
     def clone(self) -> Done:
-        return Done(self.count, [self.cells[i][:] for i in range(self.count)])
+        return Done(self.count, vec[vec[i64]]([self.cells[i][:] for i in range(self.count)]))
 
-    def __getitem__(self, i: i64) -> list[i64]:
+    def __getitem__(self, i: i64) -> vec[i64]:
         return self.cells[i]
 
     def set_done(self, i: i64, v: i64) -> None:
-        self.cells[i] = [v]
+        self.cells[i] = vec[i64]([v])
 
     def already_done(self, i: i64) -> bool:
         return len(self.cells[i]) == 1
 
     def remove(self, i: i64, v: i64) -> bool:
         if v in self.cells[i]:
-            self.cells[i].remove(v)
+            self.cells[i] = remove(self.cells[i], v)
             return True
         else:
             return False
@@ -88,7 +97,7 @@ class Done(object):
                     changed = True
         return changed
 
-    def filter_tiles(self, tiles: list[i64]) -> None:
+    def filter_tiles(self, tiles: vec[i64]) -> None:
         for v in range(i64(8)):
             if tiles[v] == 0:
                 self.remove_all(v)
@@ -175,7 +184,7 @@ class Done(object):
 
 class Node(object):
 
-    def __init__(self, pos: tuple[i64, i64], id: i64, links: list[i64]) -> None:
+    def __init__(self, pos: tuple[i64, i64], id: i64, links: vec[i64]) -> None:
         self.pos = pos
         self.id = id
         self.links = links
@@ -188,13 +197,13 @@ class Hex(object):
     def __init__(self, size: i64) -> None:
         self.size: i64 = size
         self.count: i64 = 3 * size * (size - 1) + 1
-        self.nodes_by_id: list[Node | None] = [None] * self.count
+        self.nodes_by_id = vec[Node | None]([None] * self.count)
         self.nodes_by_pos = {}
         id: i64 = 0
         for y in range(size):
             for x in range(size + y):
                 pos = (x, y)
-                node = Node(pos, id, [])
+                node = Node(pos, id, vec[i64]())
                 self.nodes_by_pos[pos] = node
                 self.nodes_by_id[node.id] = node
                 id += 1
@@ -202,7 +211,7 @@ class Hex(object):
             for x in range(y, size * 2 - 1):
                 ry = size + y - 1
                 pos = (x, ry)
-                node = Node(pos, id, [])
+                node = Node(pos, id, vec[i64]())
                 self.nodes_by_pos[pos] = node
                 self.nodes_by_id[node.id] = node
                 id += 1
@@ -215,7 +224,7 @@ class Hex(object):
                 nx = x + dir.x
                 ny = y + dir.y
                 if self.contains_pos((nx, ny)):
-                    node.links.append(self.nodes_by_pos[(nx, ny)].id)
+                    node.links = append(node.links, self.nodes_by_pos[(nx, ny)].id)
 
     def contains_pos(self, pos: tuple[i64, i64]) -> bool:
         return pos in self.nodes_by_pos
@@ -231,7 +240,7 @@ class Hex(object):
 ##################################
 class Pos(object):
 
-    def __init__(self, hex: Hex, tiles: list[i64], done: Done | None = None) -> None:
+    def __init__(self, hex: Hex, tiles: vec[i64], done: Done | None = None) -> None:
         self.hex = hex
         self.tiles = tiles
         self.done = Done(hex.count) if done is None else done
@@ -248,8 +257,8 @@ def constraint_pass(pos: Pos, last_move: i64 | None = None) -> bool:
     done = pos.done
 
     # Remove impossible values from free cells
-    free_cells: list[i64] = (list(range(done.count)) if last_move is None
-                             else pos.hex.get_by_id(last_move).links)
+    free_cells = (vec[i64]([x for x in range(done.count)]) if last_move is None
+                  else pos.hex.get_by_id(last_move).links)
     for i in free_cells:
         if not done.already_done(i):
             vmax: i64 = 0
@@ -269,7 +278,6 @@ def constraint_pass(pos: Pos, last_move: i64 | None = None) -> bool:
                         changed = True
 
     # Computes how many of each value is still free
-    assert done.cells is not None
     for cell in done.cells:
         if len(cell) == 1:
             left[cell[0]] -= 1
@@ -280,7 +288,10 @@ def constraint_pass(pos: Pos, last_move: i64 | None = None) -> bool:
             if done.remove_unfixed(v):
                 changed = True
         else:
-            possible = sum((1 if v in cell else 0) for cell in done.cells)
+            possible: i64 = 0
+            for cell in done.cells:
+                if v in cell:
+                    possible += 1
             # If the number of possible cells for a value is exactly the number of available tiles
             # put a tile in each cell
             if pos.tiles[v] == possible:
@@ -291,14 +302,14 @@ def constraint_pass(pos: Pos, last_move: i64 | None = None) -> bool:
                         changed = True
 
     # Force empty or non-empty around filled cells
-    filled_cells: list[i64] = (list(range(done.count)) if last_move is None
-                               else [last_move])
+    filled_cells = (vec[i64]([x for x in range(done.count)]) if last_move is None
+                    else vec[i64]([last_move]))
     for i in filled_cells:
         if done.already_done(i):
             num = done[i][0]
             empties: i64 = 0
             filled: i64 = 0
-            unknown: list[i64] = []
+            unknown = vec[i64]()
             cells_around = pos.hex.get_by_id(i).links
             for nid in cells_around:
                 if done.already_done(nid):
@@ -307,7 +318,7 @@ def constraint_pass(pos: Pos, last_move: i64 | None = None) -> bool:
                     else:
                         filled += 1
                 else:
-                    unknown.append(nid)
+                    unknown = append(unknown, nid)
             if len(unknown) > 0:
                 if num == filled:
                     for u in unknown:
@@ -493,10 +504,12 @@ def read_file(file: str) -> Pos:
             tile = line[p:p + 2]
             p += 2
             if tile[1] == ".":
-                inctile: i64 = EMPTY
+                inctile = EMPTY
             else:
                 inctile = int(tile)
-            tiles[inctile] += 1
+            if inctile >= len(tiles) or inctile < 0:
+                assert False, (inctile, tiles)
+            tiles[inctile] = tiles[inctile] + 1  # TODO
             # Look for locked tiles
             if tile[0] == "+":
                 # print("Adding locked tile: %d at pos %d, %d, id=%d" %
@@ -523,8 +536,9 @@ def read_file(file: str) -> Pos:
                 done.set_done(hex.get_by_pos((x, ry)).id, inctile)
         linei += 1
     hex.link_nodes()
-    done.filter_tiles(tiles)
-    return Pos(hex, tiles, done)
+    tv = vec[i64]([x for x in tiles])
+    done.filter_tiles(tv)
+    return Pos(hex, tv, done)
 
 
 def solve_file(file: str, strategy: i64, order: i64, output: StringIO) -> None:
@@ -653,6 +667,6 @@ def main(loops: i64, level: i64) -> None:
                              % (output, expected))
 
 
-@benchmark()
+@benchmark(compiled_variant=True)
 def hexiom() -> None:
     main(10, DEFAULT_LEVEL)  # Second argument: an item of LEVELS
