@@ -1,9 +1,10 @@
 """
-bm_deltablue.py
+bm_deltablue_mypyc.py
 ============
 
-NOTE: This is the interpreted variant. See bm_deltablue.py for the mypyc-optimized variant.
+NOTE: This is the mypyc-optimized variant. See bm_deltablue.py for the interpreted variant.
 
+Ported for mypyc by Jukka Lehtosalo.
 Ported for the PyPy project.
 Contributed by Daniel Lindsley
 
@@ -25,19 +26,21 @@ from abc import abstractmethod
 from typing import Iterable
 
 from typing_extensions import Final
-from mypy_extensions import i64
 
 from benchmarking import benchmark
 
+from librt.vecs import vec, append, remove, pop
+from mypy_extensions import i64
 
-# The JS variant implements "OrderedCollection", which basically completely
-# overlaps with ``list``. So we'll cheat. :D
-OrderedCollection = list
 
+class PlannerRef:
+    def __init__(self) -> None:
+        self.planner: Planner | None = None
 
 # HOORAY FOR GLOBALS... Oh wait.
 # In spirit of the original, we'll keep it, but ugh.
-planner: Planner | None = None
+# Use attribute of Final instace since mypyc gets a performance hit from global variables
+planner: Final = PlannerRef()
 
 
 class Strength(object):
@@ -45,6 +48,9 @@ class Strength(object):
         super(Strength, self).__init__()
         self.strength = strength
         self.name = name
+
+    def __repr__(self) -> str:
+        return f'Strength({self.strength})'
 
     @classmethod
     def stronger(cls, s1: Strength, s2: Strength) -> bool:
@@ -98,13 +104,11 @@ class Constraint(object):
         self.strength = strength
 
     def add_constraint(self) -> None:
-        global planner
         self.add_to_graph()
-        assert planner is not None
-        planner.incremental_add(self)
+        assert planner.planner is not None
+        planner.planner.incremental_add(self)
 
     def satisfy(self, mark: i64) -> Constraint | None:
-        global planner
         self.choose_method(mark)
 
         if not self.is_satisfied():
@@ -122,18 +126,17 @@ class Constraint(object):
 
         out.determined_by = self
 
-        assert planner is not None
-        if not planner.add_propagate(self, mark):
+        assert planner.planner is not None
+        if not planner.planner.add_propagate(self, mark):
             print('Cycle encountered')
 
         out.mark = mark
         return overridden
 
     def destroy_constraint(self) -> None:
-        global planner
         if self.is_satisfied():
-            assert planner is not None
-            planner.incremental_remove(self)
+            assert planner.planner is not None
+            planner.planner.incremental_remove(self)
         else:
             self.remove_from_graph()
 
@@ -402,7 +405,7 @@ class Variable(object):
         super(Variable, self).__init__()
         self.name = name
         self.value = initial_value
-        self.constraints: list[Constraint] = OrderedCollection()
+        self.constraints = vec[Constraint]()
         self.determined_by: Constraint | None = None
         self.mark: i64 = 0
         self.walk_strength = WEAKEST
@@ -416,10 +419,10 @@ class Variable(object):
         )
 
     def add_constraint(self, constraint: Constraint) -> None:
-        self.constraints.append(constraint)
+        self.constraints = append(self.constraints, constraint)
 
     def remove_constraint(self, constraint: Constraint) -> None:
-        self.constraints.remove(constraint)
+        self.constraints = remove(self.constraints, constraint)
 
         if self.determined_by == constraint:
             self.determined_by = None
@@ -460,71 +463,71 @@ class Planner(object):
         self.current_mark += 1
         return self.current_mark
 
-    def make_plan(self, sources: list[Constraint]) -> Plan:
+    def make_plan(self, sources: vec[Constraint]) -> Plan:
         mark = self.new_mark()
         plan = Plan()
         todo = sources
 
         while len(todo):
-            c = todo.pop(0)
+            todo, c = pop(todo, 0)
 
             if c.output().mark != mark and c.inputs_known(mark):
                 plan.add_constraint(c)
                 c.output().mark = mark
-                self.add_constraints_consuming_to(c.output(), todo)
+                todo = self.add_constraints_consuming_to(c.output(), todo)
 
         return plan
 
-    def extract_plan_from_constraints(self, constraints: Iterable[Constraint]) -> Plan:
-        sources = OrderedCollection()
+    def extract_plan_from_constraints(self, constraints: vec[Constraint]) -> Plan:
+        sources = vec[Constraint]()
 
         for c in constraints:
             if c.is_input() and c.is_satisfied():
-                sources.append(c)
+                sources = append(sources, c)
 
         return self.make_plan(sources)
 
     def add_propagate(self, c: Constraint, mark: i64) -> bool:
-        todo = OrderedCollection()
-        todo.append(c)
+        todo = vec[Constraint]()
+        todo = append(todo, c)
 
         while len(todo):
-            d = todo.pop(0)
+            todo, d = pop(todo, 0)
 
             if d.output().mark == mark:
                 self.incremental_remove(c)
                 return False
 
             d.recalculate()
-            self.add_constraints_consuming_to(d.output(), todo)
+            todo = self.add_constraints_consuming_to(d.output(), todo)
 
         return True
 
-    def remove_propagate_from(self, out: Variable) -> list[Constraint]:
+    def remove_propagate_from(self, out: Variable) -> vec[Constraint]:
         out.determined_by = None
         out.walk_strength = WEAKEST
         out.stay = True
-        unsatisfied = OrderedCollection()
-        todo = OrderedCollection()
-        todo.append(out)
+        unsatisfied = vec[Constraint]()
+        todo = vec[Variable]()
+        todo = append(todo, out)
 
         while len(todo):
-            v = todo.pop(0)
+            todo, v = pop(todo, 0)
 
             for c in v.constraints:
                 if not c.is_satisfied():
-                    unsatisfied.append(c)
+                    unsatisfied = append(unsatisfied, c)
 
             determining = v.determined_by
 
             for c in v.constraints:
                 if c != determining and c.is_satisfied():
                     c.recalculate()
-                    todo.append(c.output())
+                    todo = append(todo, c.output())
 
         return unsatisfied
 
-    def add_constraints_consuming_to(self, v: Variable, coll: list[Constraint]) -> None:
+    def add_constraints_consuming_to(self, v: Variable, coll: vec[Constraint]) -> vec[Constraint]:
         determining = v.determined_by
         cc = v.constraints
 
@@ -533,17 +536,18 @@ class Planner(object):
                 # I guess we're just updating a reference (``coll``)? Seems
                 # inconsistent with the rest of the implementation, where they
                 # return the lists...
-                coll.append(c)
+                coll = append(coll, c)
+        return coll
 
 
 class Plan(object):
 
     def __init__(self) -> None:
         super(Plan, self).__init__()
-        self.v: list[Constraint] = []
+        self.v = vec[Constraint]()
 
     def add_constraint(self, c: Constraint) -> None:
-        self.v.append(c)
+        self.v = append(self.v, c)
 
     def __len__(self) -> int:
         return len(self.v)
@@ -572,8 +576,7 @@ def chain_test(n: i64) -> None:
     of course, very low. Typical situations lie somewhere between these
     two extremes.
     """
-    global planner
-    planner = Planner()
+    planner.planner = Planner()
     prev: Variable | None = None
 
     # We need to go up to n inclusively.
@@ -594,9 +597,9 @@ def chain_test(n: i64) -> None:
 
     StayConstraint(last, STRONG_DEFAULT)
     edit = EditConstraint(first, PREFERRED)
-    edits = OrderedCollection()
-    edits.append(edit)
-    plan = planner.extract_plan_from_constraints(edits)
+    edits = vec[Constraint]()
+    edits = append(edits, edit)
+    plan = planner.planner.extract_plan_from_constraints(edits)
 
     for j in range(100):
         first.value = float(j)
@@ -613,12 +616,11 @@ def projection_test(n: int) -> None:
     time is measured to change a variable on either side of the
     mapping and to change the scale and offset factors.
     """
-    global planner
-    planner = Planner()
+    planner.planner = Planner()
     scale = Variable("scale", 10)
     offset = Variable("offset", 1000)
 
-    dests = OrderedCollection()
+    dests = []
 
     for i in range(n):
         src = Variable("src%s" % i, i)
@@ -652,13 +654,12 @@ def projection_test(n: int) -> None:
 
 
 def change(v: Variable, new_value: float) -> None:
-    global planner
     edit = EditConstraint(v, PREFERRED)
-    edits = OrderedCollection()
-    edits.append(edit)
+    edits = vec[Constraint]()
+    edits = append(edits, edit)
 
-    assert planner is not None
-    plan = planner.extract_plan_from_constraints(edits)
+    assert planner.planner is not None
+    plan = planner.planner.extract_plan_from_constraints(edits)
 
     for i in range(10):
         v.value = float(new_value)
@@ -672,8 +673,14 @@ def run_delta_blue(n: i64) -> None:
     projection_test(n)
 
 
-@benchmark()
+@benchmark(compiled_variant=True)
 def deltablue() -> None:
     n = 100
     for i in range(10):
         run_delta_blue(n)
+
+
+def log(*s):
+    import sys
+    print(*s)
+    sys.stdout.flush()
