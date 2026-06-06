@@ -1,3 +1,5 @@
+import string
+
 from benchmarking import benchmark
 
 
@@ -193,3 +195,22 @@ def ord_builtin() -> None:
 
 def is_upper_case_letter(ch: str) -> bool:
     return 65 <= ord(ch) <= 90
+
+
+rot13_trans = str.maketrans(
+    string.ascii_lowercase + string.ascii_uppercase,
+    string.ascii_lowercase[13:] + string.ascii_lowercase[:13]
+    + string.ascii_uppercase[13:] + string.ascii_uppercase[:13],
+)
+
+
+@benchmark()
+def rot13() -> None:
+    # This has a mypyc-optimized variant which implements rot13 using a loop
+    # over str items in strings_mypyc.py
+    values = ["foo bar", "longer strings With UPPER CASE as well.", "..-..--.", "\u1234"]
+    n = 0
+    for i in range(1000 * 1000):
+        for v in values:
+            n += len(v.translate(rot13_trans))
+    assert n == 55000000
