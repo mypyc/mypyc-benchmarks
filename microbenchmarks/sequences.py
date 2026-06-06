@@ -1,5 +1,6 @@
 """List and tuple benchmarks."""
 
+import array
 from typing import List, Tuple
 
 from benchmarking import benchmark
@@ -338,6 +339,32 @@ def num_primes(n: int) -> int:
             j = i * i
             while j <= n:
                 is_prime[j] = False
+                j += i
+    count = 0
+    for b in is_prime:
+        if b:
+            count += 1
+    return count
+
+
+# This has a mypyc-optimized variant in sequences_mypyc.py
+@benchmark()
+def sieve_packed() -> None:
+    n = 0
+    for i in range(1000):
+        n += num_primes_array(1000)
+    assert n == 168000, n
+
+
+def num_primes_array(n: int) -> int:
+    # This benchmarks should use an efficient packed memory representation
+    is_prime = array.array('b', [1]) * (n + 1)
+    is_prime[0] = is_prime[1] = 0
+    for i in range(2, n + 1):
+        if is_prime[i] and i * i <= n:
+            j = i * i
+            while j <= n:
+                is_prime[j] = 0
                 j += i
     count = 0
     for b in is_prime:
