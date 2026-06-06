@@ -63,6 +63,7 @@ def smoothen(a: list[float]) -> list[float]:
 
 
 def run_benchmark(benchmark: BenchmarkInfo,
+                  compiled_benchmark: BenchmarkInfo,
                   binary: str | None,
                   raw_output: bool,
                   priority: bool,
@@ -94,7 +95,7 @@ def run_benchmark(benchmark: BenchmarkInfo,
     if interpreted:
         run_in_subprocess(benchmark, binary, compiled=False)
     if compiled:
-        run_in_subprocess(benchmark, binary, compiled=True)
+        run_in_subprocess(compiled_benchmark, binary, compiled=True)
 
     env = os.environ.copy()
 
@@ -106,7 +107,7 @@ def run_benchmark(benchmark: BenchmarkInfo,
             # This makes hash values more predictable.
             env["PYTHONHASHSEED"] = "1"
         if compiled:
-            t = run_in_subprocess(benchmark, binary, compiled=True, priority=priority, env=env)
+            t = run_in_subprocess(compiled_benchmark, binary, compiled=True, priority=priority, env=env)
             times_compiled.append(t)
         if interpreted:
             t = run_in_subprocess(benchmark, binary, compiled=False, priority=priority, env=env)
@@ -252,6 +253,14 @@ def parse_args() -> Args:
     return args
 
 
+def check_benchmark_configuration(benchmarks: list[BenchmarkInfo]) -> None:
+    names = {b.name for b in benchmarks if not b.compiled_variant}
+    for b in benchmarks:
+        if b.compiled_variant and b.name not in names:
+            sys.exit(
+                f"error: Benchmark {b.name!r} only has a compiled variant (an interpreted variant with same name is expected)")
+
+
 def main() -> None:
     # Delete compiled modules before importing, as they may be stale.
     delete_binaries()
@@ -259,9 +268,14 @@ def main() -> None:
     # Import before parsing args so that syntax errors get reported.
     import_all()
 
+    check_benchmark_configuration(benchmarks)
+
     args = parse_args()
     if args.is_list:
         for benchmark in sorted(benchmarks):
+            if benchmark.compiled_variant:
+                # Don't show benchmarks with compiled_variants twice
+                continue
             suffix = ''
             if not args.raw:
                 if benchmark.module.startswith('microbenchmarks.'):
@@ -278,16 +292,23 @@ def main() -> None:
     else:
         sys.exit('unknown benchmark %r' % name)
 
+    compiled_benchmark = benchmark
+    for b in benchmarks:
+        if b.name == name and b.compiled_variant:
+            compiled_benchmark = b
+            break
+
     if not args.compiled_only and benchmark.compiled_only:
         sys.exit(f'Benchmark "{benchmark.name}" cannot be run in interpreted mode')
 
     if args.interpreted_only:
         binary = None
     else:
-        binary = compile_benchmark(benchmark.module, args.raw, args.mypy_repo)
+        binary = compile_benchmark(compiled_benchmark.module, args.raw, args.mypy_repo)
 
     run_benchmark(
         benchmark,
+        compiled_benchmark,
         binary,
         args.raw,
         args.priority,
