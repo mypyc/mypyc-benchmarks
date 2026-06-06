@@ -6,9 +6,12 @@ https://benchmarksgame-team.pages.debian.net/benchmarksgame/performance/binarytr
 
 import gc
 
+from mypy_extensions import mypyc_attr
+
 from benchmarking import benchmark
 
 
+@mypyc_attr(acyclic=True)
 class Tree:
     def __init__(self, depth: int) -> None:
         if depth == 0:
@@ -28,9 +31,6 @@ class Tree:
 
 @benchmark()
 def binary_trees() -> None:
-    # If unadjusted, most time will be spent doing GC.
-    gc.set_threshold(10000)
-
     min_depth = 4
     max_depth = 18  # Original uses 21, but it takes too long
     stretch_depth = max_depth + 1
