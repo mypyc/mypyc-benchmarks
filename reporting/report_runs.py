@@ -15,6 +15,7 @@ class BenchmarkItem(NamedTuple):
     perf: str
     perf_change: str
     mypy_commit: str
+    benchmark_changed: bool
 
 
 def gen_data_for_benchmark(baselines: List[DataItem],
@@ -25,6 +26,7 @@ def gen_data_for_benchmark(baselines: List[DataItem],
     result = []
     prev_runtime = 0.0
     prev_baseline_runtime = 0.0
+    prev_benchmark_commit = ''
     for item in reversed(runs):
         baseline = find_baseline(baselines, item)
         perf_change = ''
@@ -49,14 +51,18 @@ def gen_data_for_benchmark(baselines: List[DataItem],
             and change != -100.0
         ):
             perf_change = '%+.1f%%' % change
+        benchmark_changed = (bool(prev_benchmark_commit)
+                              and item.benchmark_commit != prev_benchmark_commit)
         new_item = BenchmarkItem(
             date=commit_dates.get(item.mypy_commit, ("???", "???"))[0],
             perf=perf,
             perf_change=perf_change,
             mypy_commit=item.mypy_commit,
+            benchmark_changed=benchmark_changed,
         )
         result.append(new_item)
         prev_runtime = item.runtime
+        prev_benchmark_commit = item.benchmark_commit
         if baseline:
             prev_baseline_runtime = baseline.runtime
     return list(reversed(result))
@@ -67,6 +73,7 @@ def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
     lines = []
     lines.append('| Date | Performance | Change | Mypy commit |')
     lines.append('| --- | :---: | :---: | --- |')
+    has_benchmark_changed = False
     for i, item in enumerate(data):
         perf = item.perf
         if i == 0 or item.perf_change:
@@ -74,12 +81,19 @@ def gen_benchmark_table(data: List[BenchmarkItem]) -> List[str]:
         date = item.date
         if i == 0:
             date = bold(date)
+        commit = mypy_commit_link(item.mypy_commit)
+        if item.benchmark_changed:
+            commit += ' *'
+            has_benchmark_changed = True
         lines.append('| %s | %s | %s | %s |' % (
             date,
             perf,
             bold(item.perf_change),
-            mypy_commit_link(item.mypy_commit),
+            commit,
         ))
+    if has_benchmark_changed:
+        lines.append('')
+        lines.append('\\* Benchmark implementation changed.')
     return lines
 
 
