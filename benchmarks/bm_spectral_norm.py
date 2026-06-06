@@ -12,10 +12,8 @@ Dirtily sped up by Simon Descarpentries
 Concurrency by Jason Stitt
 """
 
-from typing import List, Tuple, Callable
+from typing import Callable
 import time
-
-from six.moves import xrange, zip as izip
 
 from benchmarking import benchmark
 
@@ -26,16 +24,16 @@ def eval_A(i: int, j: int) -> float:
     return 1.0 / ((i + j) * (i + j + 1) // 2 + i + 1)
 
 
-def eval_times_u(func: Callable[[Tuple[int, List[float]]], float],
-                 u: List[float]) -> List[float]:
-    return [func((i, u)) for i in xrange(len(list(u)))]
+def eval_times_u(func: Callable[[tuple[int, list[float]]], float],
+                 u: list[float]) -> list[float]:
+    return [func((i, u)) for i in range(len(list(u)))]
 
 
-def eval_AtA_times_u(u: List[float]) -> List[float]:
+def eval_AtA_times_u(u: list[float]) -> list[float]:
     return eval_times_u(part_At_times_u, eval_times_u(part_A_times_u, u))
 
 
-def part_A_times_u(i_u: Tuple[int, List[float]]) -> float:
+def part_A_times_u(i_u: tuple[int, list[float]]) -> float:
     i, u = i_u
     partial_sum: float = 0.0
     for j, u_j in enumerate(u):
@@ -43,7 +41,7 @@ def part_A_times_u(i_u: Tuple[int, List[float]]) -> float:
     return partial_sum
 
 
-def part_At_times_u(i_u: Tuple[int, List[float]]) -> float:
+def part_At_times_u(i_u: tuple[int, list[float]]) -> float:
     i, u = i_u
     partial_sum: float = 0.0
     for j, u_j in enumerate(u):
@@ -52,19 +50,19 @@ def part_At_times_u(i_u: Tuple[int, List[float]]) -> float:
 
 
 def bench_spectral_norm(loops: int) -> float:
-    range_it = xrange(loops)
+    range_it = range(loops)
     t0 = time.time()
 
     for _ in range_it:
-        u: List[float] = [1] * DEFAULT_N
+        u: list[float] = [1] * DEFAULT_N
 
-        for dummy in xrange(10):
+        for dummy in range(10):
             v = eval_AtA_times_u(u)
             u = eval_AtA_times_u(v)
 
         vBv = vv = 0.0
 
-        for ue, ve in izip(u, v):
+        for ue, ve in zip(u, v):
             vBv += ue * ve
             vv += ve * ve
 
