@@ -18,9 +18,9 @@ the layout & logic from the original. (Ugh.)
 .. _`V8's source code`: (https://github.com/v8/v8/blob/master/benchmarks/deltablue.js)
 """
 
-from __future__ import print_function, annotations
+from __future__ import annotations
 from abc import abstractmethod
-from typing import Optional, Iterable, List
+from typing import Iterable
 
 from typing_extensions import Final
 from mypy_extensions import i64
@@ -35,7 +35,7 @@ OrderedCollection = list
 
 # HOORAY FOR GLOBALS... Oh wait.
 # In spirit of the original, we'll keep it, but ugh.
-planner: Optional[Planner] = None
+planner: Planner | None = None
 
 
 class Strength(object):
@@ -101,7 +101,7 @@ class Constraint(object):
         assert planner is not None
         planner.incremental_add(self)
 
-    def satisfy(self, mark: i64) -> Optional[Constraint]:
+    def satisfy(self, mark: i64) -> Constraint | None:
         global planner
         self.choose_method(mark)
 
@@ -400,8 +400,8 @@ class Variable(object):
         super(Variable, self).__init__()
         self.name = name
         self.value = initial_value
-        self.constraints: List[Constraint] = OrderedCollection()
-        self.determined_by: Optional[Constraint] = None
+        self.constraints: list[Constraint] = OrderedCollection()
+        self.determined_by: Constraint | None = None
         self.mark: i64 = 0
         self.walk_strength = WEAKEST
         self.stay = True
@@ -458,7 +458,7 @@ class Planner(object):
         self.current_mark += 1
         return self.current_mark
 
-    def make_plan(self, sources: List[Constraint]) -> Plan:
+    def make_plan(self, sources: list[Constraint]) -> Plan:
         mark = self.new_mark()
         plan = Plan()
         todo = sources
@@ -498,7 +498,7 @@ class Planner(object):
 
         return True
 
-    def remove_propagate_from(self, out: Variable) -> List[Constraint]:
+    def remove_propagate_from(self, out: Variable) -> list[Constraint]:
         out.determined_by = None
         out.walk_strength = WEAKEST
         out.stay = True
@@ -522,7 +522,7 @@ class Planner(object):
 
         return unsatisfied
 
-    def add_constraints_consuming_to(self, v: Variable, coll: List[Constraint]) -> None:
+    def add_constraints_consuming_to(self, v: Variable, coll: list[Constraint]) -> None:
         determining = v.determined_by
         cc = v.constraints
 
@@ -538,7 +538,7 @@ class Plan(object):
 
     def __init__(self) -> None:
         super(Plan, self).__init__()
-        self.v: List[Constraint] = []
+        self.v: list[Constraint] = []
 
     def add_constraint(self, c: Constraint) -> None:
         self.v.append(c)
@@ -572,7 +572,7 @@ def chain_test(n: i64) -> None:
     """
     global planner
     planner = Planner()
-    prev: Optional[Variable] = None
+    prev: Variable | None = None
 
     # We need to go up to n inclusively.
     for i in range(i64(n + 1)):
