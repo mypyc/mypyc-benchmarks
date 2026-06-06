@@ -17,7 +17,7 @@ from __future__ import annotations
 import array
 import math
 
-from typing import Tuple, overload
+from typing import overload
 from typing_extensions import Final
 
 from benchmarking import benchmark
@@ -249,7 +249,7 @@ def firstIntersection(
     return result
 
 
-Colour = Tuple[float, float, float]
+Colour = tuple[float, float, float]
 
 
 class Scene:
