@@ -8,16 +8,14 @@ Benchmark from Laurent Vaucher.
 Source: https://github.com/slowfrog/hexiom : hexiom2.py, level36.txt
 
 (Main function tweaked by Armin Rigo.)
+(Migrated to mypyc and modernized by Jukka Lehtosalo.)
 """
 
-from __future__ import division, print_function
-from typing import Dict, Any, Optional, List, Tuple, cast, IO
+from typing import cast, IO
+from io import StringIO
 
 from typing_extensions import Final
 from mypy_extensions import i64
-
-from six.moves import StringIO
-from six import u as u_lit, text_type
 
 from benchmarking import benchmark
 
@@ -53,15 +51,15 @@ class Done(object):
     MAX_NEIGHBORS_STRATEGY: Final = 4
     MIN_NEIGHBORS_STRATEGY: Final = 5
 
-    def __init__(self, count: i64, cells: Optional[List[List[i64]]] = None) -> None:
+    def __init__(self, count: i64, cells: list[list[i64]] | None= None) -> None:
         self.count = count
-        self.cells: List[List[i64]] = cells if cells is not None else [
+        self.cells: list[list[i64]] = cells if cells is not None else [
             [0, 1, 2, 3, 4, 5, 6, EMPTY] for i in range(count)]
 
     def clone(self) -> 'Done':
         return Done(self.count, [self.cells[i][:] for i in range(self.count)])
 
-    def __getitem__(self, i: i64) -> List[i64]:
+    def __getitem__(self, i: i64) -> list[i64]:
         return self.cells[i]
 
     def set_done(self, i: i64, v: i64) -> None:
@@ -89,7 +87,7 @@ class Done(object):
                     changed = True
         return changed
 
-    def filter_tiles(self, tiles: List[i64]) -> None:
+    def filter_tiles(self, tiles: list[i64]) -> None:
         for v in range(i64(8)):
             if tiles[v] == 0:
                 self.remove_all(v)
@@ -176,7 +174,7 @@ class Done(object):
 
 class Node(object):
 
-    def __init__(self, pos: Tuple[i64, i64], id: i64, links: List[i64]) -> None:
+    def __init__(self, pos: tuple[i64, i64], id: i64, links: list[i64]) -> None:
         self.pos = pos
         self.id = id
         self.links = links
@@ -189,7 +187,7 @@ class Hex(object):
     def __init__(self, size: i64) -> None:
         self.size: i64 = size
         self.count: i64 = 3 * size * (size - 1) + 1
-        self.nodes_by_id: List[Optional[Node]] = [None] * self.count
+        self.nodes_by_id: list[Node | None] = [None] * self.count
         self.nodes_by_pos = {}
         id: i64 = 0
         for y in range(size):
@@ -218,10 +216,10 @@ class Hex(object):
                 if self.contains_pos((nx, ny)):
                     node.links.append(self.nodes_by_pos[(nx, ny)].id)
 
-    def contains_pos(self, pos: Tuple[i64, i64]) -> bool:
+    def contains_pos(self, pos: tuple[i64, i64]) -> bool:
         return pos in self.nodes_by_pos
 
-    def get_by_pos(self, pos: Tuple[i64, i64]) -> Node:
+    def get_by_pos(self, pos: tuple[i64, i64]) -> Node:
         return self.nodes_by_pos[pos]
 
     def get_by_id(self, id: i64) -> Node:
@@ -232,7 +230,7 @@ class Hex(object):
 ##################################
 class Pos(object):
 
-    def __init__(self, hex: Hex, tiles: List[i64], done: Optional[Done] = None) -> None:
+    def __init__(self, hex: Hex, tiles: list[i64], done: Done | None = None) -> None:
         self.hex = hex
         self.tiles = tiles
         self.done = Done(hex.count) if done is None else done
@@ -243,13 +241,13 @@ class Pos(object):
 ##################################
 
 
-def constraint_pass(pos: Pos, last_move: Optional[i64] = None) -> bool:
+def constraint_pass(pos: Pos, last_move: i64 | None = None) -> bool:
     changed = False
     left = pos.tiles[:]
     done = pos.done
 
     # Remove impossible values from free cells
-    free_cells: List[i64] = (list(range(done.count)) if last_move is None
+    free_cells: list[i64] = (list(range(done.count)) if last_move is None
                              else pos.hex.get_by_id(last_move).links)
     for i in free_cells:
         if not done.already_done(i):
@@ -292,14 +290,14 @@ def constraint_pass(pos: Pos, last_move: Optional[i64] = None) -> bool:
                         changed = True
 
     # Force empty or non-empty around filled cells
-    filled_cells: List[i64] = (list(range(done.count)) if last_move is None
+    filled_cells: list[i64] = (list(range(done.count)) if last_move is None
                                else [last_move])
     for i in filled_cells:
         if done.already_done(i):
             num = done[i][0]
             empties: i64 = 0
             filled: i64 = 0
-            unknown: List[i64] = []
+            unknown: list[i64] = []
             cells_around = pos.hex.get_by_id(i).links
             for nid in cells_around:
                 if done.already_done(nid):
@@ -329,7 +327,7 @@ ASCENDING: Final = 1
 DESCENDING: Final = -1
 
 
-def find_moves(pos: Pos, strategy: i64, order: i64) -> List[Tuple[i64, i64]]:
+def find_moves(pos: Pos, strategy: i64, order: i64) -> list[tuple[i64, i64]]:
     done = pos.done
     cell_id = done.next_cell(pos, strategy)
     if cell_id < 0:
@@ -346,7 +344,7 @@ def find_moves(pos: Pos, strategy: i64, order: i64) -> List[Tuple[i64, i64]]:
         return moves
 
 
-def play_move(pos: Pos, move: Tuple[i64, i64]) -> None:
+def play_move(pos: Pos, move: tuple[i64, i64]) -> None:
     (cell_id, i) = move
     pos.done.set_done(cell_id, i)
 
@@ -356,30 +354,30 @@ def print_pos(pos: Pos, output: IO[str]) -> None:
     done = pos.done
     size = hex.size
     for y in range(size):
-        print(u_lit(" ") * (size - y - 1), end=u_lit(""), file=output)
+        print(" " * (size - y - 1), end="", file=output)
         for x in range(size + y):
             pos2 = (x, y)
             id = hex.get_by_pos(pos2).id
             if done.already_done(id):
-                c = text_type(done[id][0]) if done[id][
-                    0] != EMPTY else u_lit(".")
+                c = str(done[id][0]) if done[id][
+                    0] != EMPTY else "."
             else:
-                c = u_lit("?")
-            print(u_lit("%s ") % c, end=u_lit(""), file=output)
-        print(end=u_lit("\n"), file=output)
+                c = "?"
+            print("%s " % c, end="", file=output)
+        print(end="\n", file=output)
     for y in range(1, size):
-        print(u_lit(" ") * y, end=u_lit(""), file=output)
+        print(" " * y, end="", file=output)
         for x in range(y, size * 2 - 1):
             ry = size + y - 1
             pos2 = (x, ry)
             id = hex.get_by_pos(pos2).id
             if done.already_done(id):
-                c = text_type(done[id][0]) if done[id][
-                    0] != EMPTY else u_lit(".")
+                c = str(done[id][0]) if done[id][
+                    0] != EMPTY else "."
             else:
-                c = u_lit("?")
-            print(u_lit("%s ") % c, end=u_lit(""), file=output)
-        print(end=u_lit("\n"), file=output)
+                c = "?"
+            print("%s " % c, end="", file=output)
+        print(end="\n", file=output)
 
 
 OPEN: Final = 0
@@ -634,7 +632,7 @@ def main(loops: i64, level: i64) -> None:
     board, solution = LEVELS[level]
     order = DESCENDING
     strategy = Done.FIRST_STRATEGY
-    stream: Optional[StringIO]
+    stream: StringIO | None
     stream = StringIO()
 
     board = board.strip()
