@@ -1,7 +1,8 @@
 # mypy: disallow-untyped-defs
 """
-NOTE: This is the interpreted "richards" benchmark. See bm_richards_mypyc.py
-      for the mypyc-optimized compiled variant.
+NOTE: This is the mypyc-optimized "richards" benchmark. See bm_richards.py
+      for the interpreted variant that doesn't use 'vec' types, as these
+      only help compiled performance.
 
 based on a Java version:
  Based on original version written in BCPL by Dr Martin Richards
@@ -15,9 +16,10 @@ based on a Java version:
 
 from __future__ import annotations
 from typing import cast
-
 from typing_extensions import Final
 from mypy_extensions import i64
+
+from librt.vecs import vec
 
 from benchmarking import benchmark
 
@@ -41,14 +43,14 @@ BUFSIZE: Final = 4
 BUFSIZE_RANGE: Final = range(BUFSIZE)
 
 
-class Packet(object):
+class Packet:
 
     def __init__(self, l: Packet | None, i: i64, k: i64) -> None:
         self.link = l
         self.ident = i
         self.kind = k
         self.datum: i64 = 0
-        self.data: list[i64] = [0] * BUFSIZE
+        self.data = vec[i64]([0] * BUFSIZE)
 
     def append_to(self, lst: Packet | None) -> Packet:
         self.link = None
@@ -66,7 +68,7 @@ class Packet(object):
 # Task Records
 
 
-class TaskRec(object):
+class TaskRec:
     pass
 
 
@@ -106,7 +108,7 @@ class WorkerTaskRec(TaskRec):
 # Task
 
 
-class TaskState(object):
+class TaskState:
 
     def __init__(self) -> None:
         self.packet_pending = True
@@ -169,18 +171,15 @@ def trace(a: object) -> None:
 TASKTABSIZE: Final = 10
 
 
-class TaskWorkArea(object):
+class TaskWorkArea:
 
     def __init__(self) -> None:
-        self.taskTab: list[Task | None] = [None] * TASKTABSIZE
+        self.taskTab = vec[Task | None]([None] * TASKTABSIZE)
 
         self.taskList: Task | None = None
 
         self.holdCount: i64 = 0
         self.qpktCount: i64 = 0
-
-
-taskWorkArea: Final = TaskWorkArea()
 
 
 class Task(TaskState):
@@ -257,6 +256,9 @@ class Task(TaskState):
         if t is None:
             raise Exception("Bad task id %d" % id)
         return t
+
+
+taskWorkArea: Final = TaskWorkArea()
 
 
 # DeviceTask
@@ -388,7 +390,7 @@ def schedule() -> None:
             t = t.runTask()
 
 
-class Richards(object):
+class Richards:
 
     def run(self, iterations: i64) -> bool:
         for i in range(iterations):
@@ -430,7 +432,7 @@ class Richards(object):
         return True
 
 
-@benchmark()
+@benchmark(compiled_variant=True)
 def richards() -> None:
     richards = Richards()
     for i in range(3):
