@@ -145,3 +145,17 @@ def bytes_indexing() -> None:
                 if s[j] == 97:
                     n += 1
     assert n == 500000, n
+
+
+@benchmark()
+def bytes_normalize() -> None:
+    a = []
+    for i in range(1000):
+        a.append(b'Foobar  %d' % i)
+        a.append(b'%d-ab\tasdfsdf-asdf\n' % i)
+        a.append(b'yeah')
+    n = 0
+    for i in range(1000):
+        for s in a:
+            n += len(b' '.join(filter(None, s.replace(b'\t', b' ').split(b' '))))
+    assert n == 33780000, n
