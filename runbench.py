@@ -287,7 +287,7 @@ def main() -> None:
 
     name = args.benchmark
     for benchmark in benchmarks:
-        if benchmark.name == name:
+        if benchmark.name == name and not benchmark.compiled_variant:
             break
     else:
         sys.exit('unknown benchmark %r' % name)
