@@ -1,7 +1,7 @@
 # mypy: disallow-untyped-defs
 """Simple, brute-force N-Queens solver."""
 
-from typing import Iterator, Iterable, Tuple, Optional
+from typing import Iterator, Iterable
 
 from benchmarking import benchmark
 
@@ -9,7 +9,7 @@ __author__ = "collinwinter@google.com (Collin Winter)"
 
 
 # Pure-Python implementation of itertools.permutations().
-def permutations(iterable: Iterable[int], r: Optional[int] = None) -> Iterator[Tuple[int, ...]]:
+def permutations(iterable: Iterable[int], r: int | None = None) -> Iterator[tuple[int, ...]]:
     """permutations(range(3), 2) --> (0,1) (0,2) (1,0) (1,2) (2,0) (2,1)"""
     pool = tuple(iterable)
     n = len(pool)
@@ -34,7 +34,7 @@ def permutations(iterable: Iterable[int], r: Optional[int] = None) -> Iterator[T
 
 
 # From http://code.activestate.com/recipes/576647/
-def do_n_queens(queen_count: int) -> Iterator[Tuple[int, ...]]:
+def do_n_queens(queen_count: int) -> Iterator[tuple[int, ...]]:
     """N-Queens solver.
 
     Args:
